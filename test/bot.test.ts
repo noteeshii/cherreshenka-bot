@@ -1,0 +1,177 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import type { StreamerbotEventData, StreamerbotClient } from '@streamerbot/client';
+import { Bot } from '../src/bot.ts';
+import { readConfig } from '../src/config.ts';
+import { chatText, timeoutArgs, createTwitch } from '../src/twitch.ts';
+
+function setup() {
+  const calls: unknown[][] = [];
+  const bot = new Bot(
+    {
+      sendMessage: async (...args) => {
+        calls.push(['message', ...args]);
+      },
+      announce: async (...args) => {
+        calls.push(['announce', ...args]);
+      },
+      timeout: async (...args) => {
+        calls.push(['timeout', ...args]);
+      },
+    },
+    readConfig({ MUSIC_REWARD_ID: 'reward', TWITCH_BOT_LOGIN: 'bot' }),
+    {
+      current: { title: 'Test song', url: '', audioUrl: '' },
+      enqueue: (input) => {
+        calls.push(['enqueue', input]);
+      },
+      pause: async () => {
+        calls.push(['pause']);
+      },
+      resume: async () => {
+        calls.push(['resume']);
+      },
+      setVolume: async (volume) => {
+        calls.push(['volume', volume]);
+      },
+      skip: async () => {
+        calls.push(['skip']);
+      },
+    },
+  );
+  return { bot, calls };
+}
+function chat(text: string, badge = '', id = '1') {
+  return {
+    message: {
+      message: text,
+      msgId: id,
+      userId: '42',
+      username: 'viewer',
+      badges: [{ name: badge }],
+    },
+  } as StreamerbotEventData<'Twitch.ChatMessage'>;
+}
+test('команды без учёта регистра, дубликаты и cooldown', async () => {
+  const { bot, calls } = setup();
+  await bot.onChat(chat(' !ПЕСНЯ '));
+  await bot.onChat(chat('!песня'));
+  await bot.onChat(chat('!песня', '', '2'));
+  assert.deepEqual(calls, [['message', 'Сейчас играет: Test song']]);
+});
+test('модерация недоступна зрителям и VIP', async () => {
+  for (const badge of ['', 'vip']) {
+    const { bot, calls } = setup();
+    for (const command of ['!пауза', '!продолжить', '!пропустить', '!громкость 50'])
+      await bot.onChat(chat(command, badge));
+    assert.equal(calls.length, 0);
+  }
+});
+test('модератор и стример могут выполнять команды', async () => {
+  for (const badge of ['moderator', 'broadcaster']) {
+    for (const [command, expected] of [
+      ['!громкость 50', ['volume', 50]],
+      ['!пауза', ['pause']],
+      ['!продолжить', ['resume']],
+      ['!пропустить', ['skip']],
+    ] as const) {
+      const { bot, calls } = setup();
+      await bot.onChat(chat(command, badge));
+      assert.deepEqual(calls, [expected]);
+    }
+  }
+});
+test('сообщения бота, internal и тестовые события игнорируются', async () => {
+  for (const overrides of [{ username: 'bot' }, { internal: true }, { isTest: true }]) {
+    const { bot, calls } = setup();
+    const event = chat('!песня');
+    Object.assign(event.message, overrides);
+    await bot.onChat(event);
+    assert.equal(calls.length, 0);
+  }
+});
+test('награды обрабатываются по ID, один раз', async () => {
+  const { bot, calls } = setup();
+  const reward = {
+    id: 'redemption',
+    user_login: 'viewer',
+    user_input: 'https://youtu.be/dQw4w9WgXcQ',
+    status: 'unfulfilled',
+    reward: { id: 'reward', title: 'Привет' },
+  } as StreamerbotEventData<'Twitch.RewardRedemption'>;
+  await bot.onReward({ ...reward, reward: { ...reward.reward, id: 'unknown' } });
+  await bot.onReward({ ...reward, status: 'canceled' });
+  await bot.onReward(reward);
+  await bot.onReward(reward);
+  assert.deepEqual(calls, [['enqueue', 'https://youtu.be/dQw4w9WgXcQ']]);
+});
+test('валидация таймаута и текста', () => {
+  for (const duration of [0, -1, 1.5, NaN, Infinity, 1209601])
+    assert.throws(() => timeoutArgs('viewer', duration));
+  assert.throws(() => timeoutArgs('bad login', 60));
+  assert.deepEqual(timeoutArgs('@Viewer', 60), { username: 'viewer', duration: 60, reason: '' });
+  assert.throws(() => chatText(' '));
+  assert.throws(() => chatText('a'.repeat(501)));
+  assert.equal(chatText(' hi\nthere '), 'hi there');
+});
+test('транспорт передаёт реальные запросы API и проверяет ошибки', async () => {
+  const calls: unknown[][] = [];
+  const client = {
+    sendMessage: async (...args: unknown[]) => {
+      calls.push(args);
+      return { status: 'ok' };
+    },
+    doAction: async (...args: unknown[]) => {
+      calls.push(args);
+      return { status: 'ok' };
+    },
+  } as unknown as Pick<StreamerbotClient, 'sendMessage' | 'doAction'>;
+  const twitch = createTwitch(client, 'Dispatch', true);
+  await twitch.sendMessage('hi');
+  await twitch.announce('news');
+  await twitch.timeout('@Viewer', 30, 'spam');
+  assert.deepEqual(calls, [
+    ['twitch', 'hi', { bot: true, internal: false }],
+    [{ name: 'Dispatch' }, { operation: 'announce', message: 'news', bot: true }],
+    [
+      { name: 'Dispatch' },
+      { operation: 'timeout', username: 'viewer', duration: 30, reason: 'spam', bot: true },
+    ],
+  ]);
+  client.sendMessage = async () => ({ status: 'error' }) as never;
+  await assert.rejects(twitch.sendMessage('hi'));
+});
+test('валидация настроек', () => {
+  assert.throws(() => readConfig({ STREAMERBOT_URL: 'https://localhost' }));
+  assert.throws(() => readConfig({ TWITCH_USE_BOT: 'yes' }));
+  assert.equal(readConfig({}).connection.port, 8080);
+});
+
+test('старые команды удалены', async () => {
+  const { bot, calls } = setup();
+  for (const command of ['!ping', '!help', '!say hi', '!announce hi', '!timeout viewer 60']) {
+    await bot.onChat(chat(command, 'moderator'));
+  }
+  assert.deepEqual(calls, []);
+});
+
+test('управление не блокируется cooldown предыдущей команды', async () => {
+  const { bot, calls } = setup();
+  await bot.onChat(chat('!пауза', 'moderator', '1'));
+  await bot.onChat(chat('!продолжить', 'moderator', '2'));
+  await bot.onChat(chat('!пропустить', 'moderator', '3'));
+  assert.deepEqual(calls, [['pause'], ['resume'], ['skip']]);
+});
+
+test('громкость: границы диапазона и некорректные аргументы', async () => {
+  for (const volume of [1, 100]) {
+    const { bot, calls } = setup();
+    await bot.onChat(chat(`!громкость ${volume}`, 'moderator'));
+    assert.deepEqual(calls, [['volume', volume]]);
+  }
+  for (const value of ['', '0', '101', '-1', '1.5', 'NaN', '50 extra', '1e2']) {
+    const { bot, calls } = setup();
+    await bot.onChat(chat(`!громкость ${value}`, 'moderator'));
+    assert.deepEqual(calls, [['message', 'Использование: !громкость <1-100> (целое число).']]);
+  }
+});

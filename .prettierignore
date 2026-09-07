@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+package-lock.json
+.env
+.env.*
+# Prettier does not support C# without a separate plugin.
+streamerbot/*.cs

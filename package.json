@@ -1,0 +1,26 @@
+{
+  "name": "cherreshenka-bot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.ts",
+    "dev": "node --watch --env-file-if-exists=.env src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts",
+    "check": "npm run format:check && npm run typecheck && npm test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "prettier": "3.9.6",
+    "typescript": "~6.0.2"
+  },
+  "dependencies": {
+    "@streamerbot/client": "^2.0.1"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  }
+}
