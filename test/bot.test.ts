@@ -175,3 +175,57 @@ test('громкость: границы диапазона и некоррек�
     assert.deepEqual(calls, [['message', 'Использование: !громкость <1-100> (целое число).']]);
   }
 });
+
+function modernChat(command: string, badge = '', id = 'modern-1') {
+  return {
+    text: command,
+    messageId: id,
+    user: { id: '42', login: 'viewer', badges: [{ name: badge }] },
+    broadcaster: { id: '100', login: 'streamer' },
+    meta: { internal: false, isTest: false },
+    isTest: false,
+  };
+}
+
+test('актуальный ChatMessage: !песня отвечает и повторное событие игнорируется', async () => {
+  const { bot, calls } = setup();
+  await bot.onChat(modernChat('!песня'));
+  await bot.onChat(modernChat('!песня'));
+  assert.deepEqual(calls, [['message', 'Сейчас играет: Test song']]);
+});
+
+test('актуальный ChatMessage: права читаются из user.badges', async () => {
+  for (const badge of ['', 'vip', 'moderator', 'broadcaster']) {
+    const { bot, calls } = setup();
+    await bot.onChat(modernChat('!громкость 50', badge));
+    assert.deepEqual(calls, ['moderator', 'broadcaster'].includes(badge) ? [['volume', 50]] : []);
+  }
+});
+
+test('актуальный ChatMessage: тестовые, внутренние и сообщения бота игнорируются', async () => {
+  for (const override of [
+    { isTest: true },
+    { meta: { isTest: true } },
+    { meta: { internal: true } },
+    { user: { id: '42', login: 'bot', badges: [] } },
+  ]) {
+    const { bot, calls } = setup();
+    await bot.onChat({ ...modernChat('!песня'), ...override });
+    assert.deepEqual(calls, []);
+  }
+});
+
+test('повреждённые события не запускают команды и не вызывают исключений', async () => {
+  const { bot, calls } = setup();
+  for (const payload of [
+    null,
+    undefined,
+    {},
+    { text: '!песня' },
+    { message: null },
+    { ...modernChat('!громкость 50'), user: null },
+  ]) {
+    await bot.onChat(payload);
+  }
+  assert.deepEqual(calls, []);
+});

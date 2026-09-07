@@ -1,8 +1,8 @@
-import type { StreamerbotEventData } from '@streamerbot/client';
+import type { ChatMessage } from './chat-message.ts';
 import type { Twitch } from './twitch.ts';
 import type { Music } from './music/queue.ts';
 
-export type ChatMessage = StreamerbotEventData<'Twitch.ChatMessage'>['message'];
+export type { ChatMessage } from './chat-message.ts';
 
 export interface Command {
   moderator?: boolean;

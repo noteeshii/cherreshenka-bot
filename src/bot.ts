@@ -1,11 +1,11 @@
 import type { StreamerbotEventData } from '@streamerbot/client';
+import { parseChatMessage } from './chat-message.ts';
 import { createCommands, parseCommand } from './commands.ts';
 import type { ChatMessage, Command } from './commands.ts';
 import type { Config } from './config.ts';
 import type { Twitch } from './twitch.ts';
 import type { Music } from './music/queue.ts';
 
-type ChatEvent = StreamerbotEventData<'Twitch.ChatMessage'>;
 type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
 type RewardHandler = (reward: RewardEvent) => Promise<void>;
 
@@ -52,9 +52,12 @@ export class Bot {
     }
   }
 
-  async onChat({ message }: ChatEvent): Promise<void> {
-    if (!message || typeof message.message !== 'string' || !message.msgId || !message.userId) {
-      this.trace('Пропуск: событие не содержит message, msgId или userId.');
+  async onChat(payload: unknown): Promise<void> {
+    const message = parseChatMessage(payload);
+    if (!message) {
+      this.trace(
+        'Пропуск: неизвестный формат ChatMessage или отсутствуют текст, ID сообщения либо ID пользователя.',
+      );
       return;
     }
     if (this.shouldIgnoreMessage(message)) {
