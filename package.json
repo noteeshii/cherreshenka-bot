@@ -10,7 +10,8 @@
     "test": "node --test test/*.test.ts",
     "check": "npm run format:check && npm run typecheck && npm test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "diagnose:music": "node --env-file-if-exists=.env scripts/diagnose-music.ts"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
