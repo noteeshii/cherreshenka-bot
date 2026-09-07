@@ -37,6 +37,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     musicRewardId: env.MUSIC_REWARD_ID ?? '',
     mpvPath: env.MPV_PATH ?? 'mpv',
     ytDlpPath: env.YT_DLP_PATH ?? 'yt-dlp',
+    yandexMusicToken: env.YANDEX_MUSIC_TOKEN?.trim() ?? '',
   };
 }
 

@@ -31,19 +31,28 @@ test('альбомы, плейлисты и посторонние адреса 
     assert.throws(() => musicSource(url));
 });
 
-test('Яндекс: MP3 и название передаются плееру, выбирается формат best', async () => {
-  let args: string[] = [];
-  const resolve = createMusicResolver('yt-dlp', async (_binary, command) => {
-    args = command;
-    return {
-      stdout: JSON.stringify({ title: 'Artist - Song', url: 'http://cdn.example/get-mp3/audio' }),
-    };
-  });
-  const track = await resolve(yandex, new AbortController().signal);
+test('Яндекс использует отдельный API, не вызывая yt-dlp', async () => {
+  const api = {
+    resolve: async (url: string) => ({
+      title: 'Artist - Song',
+      url,
+      audioUrl: 'https://cdn.yandex.net/audio',
+    }),
+    title: async () => 'Artist - Song',
+  };
+  const extract = async () => {
+    throw new Error('yt-dlp не должен вызываться');
+  };
+  const track = await createMusicResolver(
+    'yt-dlp',
+    extract,
+    api,
+  )(yandex, new AbortController().signal);
   assert.equal(track.title, 'Artist - Song');
-  assert.equal(track.audioUrl, 'http://cdn.example/get-mp3/audio');
-  assert.equal(args[args.indexOf('--format') + 1], 'best');
-  assert.deepEqual(args.slice(-2), ['--', yandex]);
+  assert.equal(
+    await createMusicTitleResolver('yt-dlp', extract, api)(yandex, new AbortController().signal),
+    'Artist - Song',
+  );
 });
 
 test('YouTube сохраняет выбор bestaudio и требование HTTPS', async () => {
@@ -54,17 +63,9 @@ test('YouTube сохраняет выбор bestaudio и требование HT
   await assert.rejects(resolve(youtube, new AbortController().signal), /Неподдерживаемый/);
 });
 
-test('название Яндекс-трека загружается для списка очереди', async () => {
-  const resolve = createMusicTitleResolver('yt-dlp', async (_binary, args) => {
-    assert.deepEqual(args.slice(-2), ['--', yandex]);
-    return { stdout: 'Artist - Song\n' };
-  });
-  assert.equal(await resolve(yandex, new AbortController().signal), 'Artist - Song');
-});
-
 test('ошибки экстрактора не заменяются фиктивными треками', async () => {
   const resolve = createMusicResolver('yt-dlp', async () => {
     throw new Error('Authentication required');
   });
-  await assert.rejects(resolve(yandex, new AbortController().signal), /Authentication required/);
+  await assert.rejects(resolve(youtube, new AbortController().signal), /Authentication required/);
 });

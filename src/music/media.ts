@@ -1,3 +1,5 @@
+import { createYandexMusic } from './yandex.ts';
+import type { YandexMusic } from './yandex.ts';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { musicSource } from './source.ts';
@@ -28,20 +30,17 @@ function extractorArgs(source: MusicSource): string[] {
   return args;
 }
 
-export function createMusicResolver(binary: string, extract: Extract = execute) {
+export function createMusicResolver(
+  binary: string,
+  extract: Extract = execute,
+  yandex: YandexMusic = createYandexMusic(),
+) {
   return async (input: string, signal: AbortSignal): Promise<Track> => {
     const source = musicSource(input);
+    if (source.provider === 'yandex') return yandex.resolve(source.url, signal);
     const { stdout } = await extract(
       binary,
-      [
-        ...extractorArgs(source),
-        '--dump-single-json',
-        // Yandex returns a direct MP3 URL without a formats array or reliable codec metadata.
-        '--format',
-        source.provider === 'yandex' ? 'best' : 'bestaudio',
-        '--',
-        source.url,
-      ],
+      [...extractorArgs(source), '--dump-single-json', '--format', 'bestaudio', '--', source.url],
       { signal, timeout: 60_000, maxBuffer: 8 * 1024 * 1024, windowsHide: true },
     );
     const info = JSON.parse(stdout);
@@ -56,17 +55,21 @@ export function createMusicResolver(binary: string, extract: Extract = execute) 
       throw new Error('Не удалось получить аудио трека.');
     }
     const protocol = new URL(info.url).protocol;
-    // The Yandex extractor currently returns HTTP audio URLs.
-    if (protocol !== 'https:' && !(source.provider === 'yandex' && protocol === 'http:')) {
+    if (protocol !== 'https:') {
       throw new Error('Неподдерживаемый аудиопоток.');
     }
     return { title: info.title, url: source.url, audioUrl: info.url };
   };
 }
 
-export function createMusicTitleResolver(binary: string, extract: Extract = execute) {
+export function createMusicTitleResolver(
+  binary: string,
+  extract: Extract = execute,
+  yandex: YandexMusic = createYandexMusic(),
+) {
   return async (input: string, signal: AbortSignal): Promise<string> => {
     const source = musicSource(input);
+    if (source.provider === 'yandex') return yandex.title(source.url, signal);
     const { stdout } = await extract(
       binary,
       [

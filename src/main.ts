@@ -1,3 +1,4 @@
+import { createYandexMusic } from './music/yandex.ts';
 import { checkMusicDependencies } from './music/dependencies.ts';
 import { StreamerbotClient } from '@streamerbot/client';
 import { MusicQueue } from './music/queue.ts';
@@ -35,11 +36,12 @@ const client = new StreamerbotClient({
   onError: (error) => console.error('Ошибка WebSocket:', error.message),
 });
 
+const yandex = createYandexMusic(config.yandexMusicToken);
 const music = new MusicQueue(
   new MpvPlayer(config.mpvPath),
-  createMusicResolver(config.ytDlpPath),
+  createMusicResolver(config.ytDlpPath, undefined, yandex),
   reportError,
-  createMusicTitleResolver(config.ytDlpPath),
+  createMusicTitleResolver(config.ytDlpPath, undefined, yandex),
 );
 // Musical replies always use the bot account.
 const botChat = createTwitch(client, config.action, true);

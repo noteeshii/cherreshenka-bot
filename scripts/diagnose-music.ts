@@ -1,3 +1,4 @@
+import { createYandexMusic } from '../src/music/yandex.ts';
 import { spawn } from 'node:child_process';
 import { readConfig } from '../src/config.ts';
 import { musicSource } from '../src/music/source.ts';
@@ -16,7 +17,16 @@ async function main(): Promise<void> {
     throw new Error('Использование: npm run diagnose:music -- "ссылка на трек"');
   }
   const source = musicSource(input);
-  const { ytDlpPath } = readConfig();
+  const { ytDlpPath, yandexMusicToken } = readConfig();
+  if (source.provider === 'yandex') {
+    console.info('Диагностика API Яндекс Музыки; токен задан:', Boolean(yandexMusicToken));
+    const track = await createYandexMusic(yandexMusicToken).resolve(
+      source.url,
+      new AbortController().signal,
+    );
+    console.info('Аудиоссылка получена:', track.title);
+    return;
+  }
   console.info('Проверка версии yt-dlp:');
   const versionExit = await run(ytDlpPath, ['--ignore-config', '--version']);
   if (versionExit !== 0) {
@@ -27,7 +37,7 @@ async function main(): Promise<void> {
   console.info(`Диагностика ${source.provider}: ${source.url}`);
   const args = ['--ignore-config', '--verbose', '--no-playlist', '--simulate', '--print', 'title'];
   if (source.provider === 'youtube') args.push('--js-runtimes', 'node');
-  args.push('--format', source.provider === 'yandex' ? 'best' : 'bestaudio', '--', source.url);
+  args.push('--format', 'bestaudio', '--', source.url);
   process.exitCode = await run(ytDlpPath, args);
 }
 
