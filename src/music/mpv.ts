@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { AudioPlayer } from './queue.ts';
-import type { Track } from './youtube.ts';
+import type { Track } from './media.ts';
 
 // One mpv process per track: its exit marks the end of playback, including skips.
 export class MpvPlayer implements AudioPlayer {

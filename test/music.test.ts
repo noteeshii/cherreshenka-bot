@@ -5,7 +5,7 @@ import { queueMessages } from '../src/music/queue-messages.ts';
 import { MusicQueue } from '../src/music/queue.ts';
 import type { AudioPlayer } from '../src/music/queue.ts';
 import { youtubeUrl } from '../src/music/youtube.ts';
-import type { Track } from '../src/music/youtube.ts';
+import type { Track } from '../src/music/media.ts';
 
 const first = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
 const second = 'https://www.youtube.com/watch?v=abcdefghijk';
@@ -193,4 +193,24 @@ test('длинная очередь разбивается без потери �
     positions,
     Array.from({ length: 100 }, (_, index) => index + 1),
   );
+});
+
+test('YouTube и Яндекс Музыка воспроизводятся в общей очереди', async () => {
+  const yandex = 'https://music.yandex.ru/album/540508/track/4878838';
+  const { queue, played, finish } = setup();
+  queue.enqueue(first);
+  queue.enqueue(yandex);
+  queue.enqueue(second);
+  await setImmediate();
+  assert.deepEqual(
+    queue.queuedTracks.map((track) => track.url),
+    [yandex, second],
+  );
+  finish();
+  await setImmediate();
+  assert.deepEqual(played, [first, yandex]);
+  await queue.skip();
+  await setImmediate();
+  assert.deepEqual(played, [first, yandex, second]);
+  await queue.close();
 });

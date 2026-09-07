@@ -1,5 +1,5 @@
-import { youtubeUrl } from './youtube.ts';
-import type { Track } from './youtube.ts';
+import { musicSource } from './source.ts';
+import type { Track } from './media.ts';
 
 export interface AudioPlayer {
   play(track: Track, signal: AbortSignal): Promise<void>;
@@ -59,7 +59,7 @@ export class MusicQueue implements Music {
   enqueue(input: string): void {
     if (this.closed) throw new Error('Музыкальная очередь остановлена.');
     if (this.waiting.length >= 100) throw new Error('Очередь заполнена.');
-    this.waiting.push({ url: youtubeUrl(input) });
+    this.waiting.push({ url: musicSource(input).url });
     this.startWorker();
     this.startTitleWorker();
   }
