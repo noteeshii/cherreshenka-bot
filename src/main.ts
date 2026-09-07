@@ -6,6 +6,7 @@ import { createYoutubeResolver } from './music/youtube.ts';
 import { Bot } from './bot.ts';
 import { readConfig } from './config.ts';
 import { createTwitch } from './twitch.ts';
+import { checkChatConnection } from './chat-connection.ts';
 
 function reportError(error: unknown): void {
   const message = error instanceof Error ? error.message : 'неизвестная ошибка';
@@ -13,6 +14,7 @@ function reportError(error: unknown): void {
 }
 
 const config = readConfig();
+console.info('Проверка mpv и yt-dlp…');
 await checkMusicDependencies(config.mpvPath, config.ytDlpPath);
 const client = new StreamerbotClient({
   ...config.connection,
@@ -20,7 +22,15 @@ const client = new StreamerbotClient({
   autoReconnect: true,
   retries: -1,
   logLevel: 'warn',
-  onConnect: () => console.info('Подключено к streamer.bot'),
+  onData: (payload) => {
+    if (config.debugChat && payload?.event?.source && payload?.event?.type) {
+      console.info(`[WebSocket] ${payload.event.source}.${payload.event.type}`);
+    }
+  },
+  onConnect: () => {
+    console.info('Подключено к streamer.bot');
+    void checkChatConnection(client, config).then(console.info).catch(reportError);
+  },
   onDisconnect: () => console.warn('Соединение закрыто; ожидается переподключение'),
   onError: (error) => console.error('Ошибка WebSocket:', error.message),
 });

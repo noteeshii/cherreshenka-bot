@@ -54,6 +54,7 @@ export class Bot {
 
   async onChat({ message }: ChatEvent): Promise<void> {
     if (!message || typeof message.message !== 'string' || !message.msgId || !message.userId) {
+      this.trace('Пропуск: событие не содержит message, msgId или userId.');
       return;
     }
     if (this.shouldIgnoreMessage(message)) {
@@ -65,18 +66,26 @@ export class Bot {
       return;
     }
 
+    this.trace(
+      `Получена команда ${parsed.name}; канал=${message.channel}; пользователь=${message.username}`,
+    );
     const command = this.commands.get(parsed.name);
     if (!command || (command.moderator && !isModerator(message))) {
+      this.trace(!command ? 'Пропуск: неизвестная команда.' : 'Пропуск: нет прав модератора.');
       return;
     }
     if (this.isDuplicateEvent(`chat:${message.msgId}`)) {
+      this.trace('Пропуск: повторное событие.');
       return;
     }
     if (!command.moderator && this.isOnCooldown(message.userId)) {
+      this.trace('Пропуск: cooldown 3 секунды.');
       return;
     }
 
+    this.trace(`Выполнение ${parsed.name}`);
     await command.run(parsed.args, message);
+    this.trace(`Обработчик ${parsed.name} завершён.`);
   }
 
   async onReward(reward: RewardEvent): Promise<void> {
@@ -97,7 +106,21 @@ export class Bot {
     const isOtherChannel =
       this.config.channel !== '' && message.channel?.toLowerCase() !== this.config.channel;
 
-    return message.internal || message.isTest || isBotMessage || isOtherChannel;
+    const reason = message.internal
+      ? 'внутреннее сообщение'
+      : message.isTest
+        ? 'тестовое сообщение'
+        : isBotMessage
+          ? 'сообщение от Bot Account'
+          : isOtherChannel
+            ? `канал ${message.channel} не совпадает с TWITCH_CHANNEL=${this.config.channel}`
+            : undefined;
+    if (reason) this.trace(`Пропуск: ${reason}.`);
+    return reason !== undefined;
+  }
+
+  private trace(message: string): void {
+    if (this.config.debugChat) console.info(`[Chat] ${message}`);
   }
 
   // Reserve the event before awaiting a handler to prevent concurrent duplicates.

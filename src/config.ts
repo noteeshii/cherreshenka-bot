@@ -29,6 +29,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
       endpoint: url.pathname,
       password: env.STREAMERBOT_PASSWORD,
     },
+    debugChat: env.DEBUG_CHAT === 'true',
     useBot: useBot === 'true',
     botLogin: (env.TWITCH_BOT_LOGIN ?? '').toLowerCase(),
     channel: (env.TWITCH_CHANNEL ?? '').toLowerCase(),

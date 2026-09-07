@@ -36,10 +36,15 @@ export function timeoutArgs(username: string, duration: number, reason = '') {
   return { username: login, duration, reason };
 }
 
-async function ensureSuccess(request: Promise<{ status: string }>): Promise<void> {
+async function ensureSuccess(request: Promise<{ status: string; error?: string }>): Promise<void> {
   const response = await request;
   if (response.status !== 'ok') {
-    throw new Error('Streamer.bot отклонил запрос');
+    if (response.error === 'Authentication required') {
+      throw new Error(
+        'Отправка в чат требует авторизации: включите Authentication в WebSocket Server streamer.bot и укажите его пароль в STREAMERBOT_PASSWORD в .env.',
+      );
+    }
+    throw new Error(`Streamer.bot отклонил запрос: ${response.error || 'причина не указана'}`);
   }
 }
 
