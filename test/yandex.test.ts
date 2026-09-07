@@ -95,3 +95,32 @@ test('некорректный результат сервиса не вызыв
     /некорректный ответ/,
   );
 });
+
+test('hex timestamp Яндекса сохраняется вместе с ведущими нулями', async () => {
+  const timestamp = '00065ae7388a63cc';
+  const { request } = mock([
+    metadata,
+    { result: [format] },
+    { host: 'cdn.yandex.net', path: '/audio.mp3', ts: timestamp, s: 'salt' },
+  ]);
+  const track = await createYandexMusic('test-token', request).resolve(
+    url,
+    new AbortController().signal,
+  );
+  const sign = createHash('md5').update('XGRlBW9FXlekgbPrRHuSiAaudio.mp3salt').digest('hex');
+  assert.equal(track.audioUrl, `https://cdn.yandex.net/get-mp3/${sign}/${timestamp}/audio.mp3`);
+});
+
+test('некорректные timestamp не принимаются как части URL', async () => {
+  for (const timestamp of ['', '12/../34', '12?query=1', 'xyz', null, 123]) {
+    const { request } = mock([
+      metadata,
+      { result: [format] },
+      { host: 'cdn.yandex.net', path: '/audio.mp3', ts: timestamp, s: 'salt' },
+    ]);
+    await assert.rejects(
+      createYandexMusic('', request).resolve(url, new AbortController().signal),
+      /некорректные данные аудиоссылки/,
+    );
+  }
+});

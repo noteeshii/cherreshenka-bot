@@ -140,7 +140,8 @@ export function createYandexMusic(token = '', request: typeof fetch = fetch): Ya
           typeof path !== 'string' ||
           !path.startsWith('/') ||
           typeof ts !== 'string' ||
-          !/^\d+$/.test(ts) ||
+          // Yandex uses a hexadecimal timestamp; keep its leading zeroes intact.
+          !/^[0-9a-f]+$/i.test(ts) ||
           typeof s !== 'string'
         ) {
           throw new Error('Яндекс Музыка: некорректные данные аудиоссылки.');
