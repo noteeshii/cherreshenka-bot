@@ -16,7 +16,7 @@ export class MpvPlayer implements AudioPlayer {
   private process: ChildProcess | undefined;
   private socketPath: string | undefined;
   private paused = false;
-  private volume = 100;
+  private volume = 50;
   private volumeUpdate: Promise<void> = Promise.resolve();
 
   constructor(binary: string) {
