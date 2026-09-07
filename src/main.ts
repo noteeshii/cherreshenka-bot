@@ -2,7 +2,7 @@ import { checkMusicDependencies } from './music/dependencies.ts';
 import { StreamerbotClient } from '@streamerbot/client';
 import { MusicQueue } from './music/queue.ts';
 import { MpvPlayer } from './music/mpv.ts';
-import { createYoutubeResolver } from './music/youtube.ts';
+import { createYoutubeResolver, createYoutubeTitleResolver } from './music/youtube.ts';
 import { Bot } from './bot.ts';
 import { readConfig } from './config.ts';
 import { createTwitch } from './twitch.ts';
@@ -39,6 +39,7 @@ const music = new MusicQueue(
   new MpvPlayer(config.mpvPath),
   createYoutubeResolver(config.ytDlpPath),
   reportError,
+  createYoutubeTitleResolver(config.ytDlpPath),
 );
 // Musical replies always use the bot account.
 const botChat = createTwitch(client, config.action, true);

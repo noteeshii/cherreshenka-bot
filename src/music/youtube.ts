@@ -62,3 +62,26 @@ export function createYoutubeResolver(binary: string) {
     return { title: info.title, url, audioUrl: info.url };
   };
 }
+
+export function createYoutubeTitleResolver(binary: string) {
+  return async (url: string, signal: AbortSignal): Promise<string> => {
+    const { stdout } = await execute(
+      binary,
+      [
+        '--ignore-config',
+        '--no-playlist',
+        '--no-warnings',
+        '--skip-download',
+        '--flat-playlist',
+        '--print',
+        'title',
+        '--js-runtimes',
+        'node',
+        '--',
+        youtubeUrl(url),
+      ],
+      { signal, timeout: 15_000, maxBuffer: 64 * 1024, windowsHide: true },
+    );
+    return stdout.trim();
+  };
+}

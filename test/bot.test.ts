@@ -5,7 +5,7 @@ import { Bot } from '../src/bot.ts';
 import { readConfig } from '../src/config.ts';
 import { chatText, timeoutArgs, createTwitch } from '../src/twitch.ts';
 
-function setup() {
+function setup(queuedTracks: { title?: string; url: string }[] = []) {
   const calls: unknown[][] = [];
   const bot = new Bot(
     {
@@ -21,6 +21,7 @@ function setup() {
     },
     readConfig({ MUSIC_REWARD_ID: 'reward', TWITCH_BOT_LOGIN: 'bot' }),
     {
+      queuedTracks,
       current: { title: 'Test song', url: '', audioUrl: '' },
       enqueue: (input) => {
         calls.push(['enqueue', input]);
@@ -228,4 +229,19 @@ test('повреждённые события не запускают коман
     await bot.onChat(payload);
   }
   assert.deepEqual(calls, []);
+});
+
+test('!очередь доступна зрителям и показывает порядок ожидающих треков', async () => {
+  const { bot, calls } = setup([
+    { title: 'First', url: 'one' },
+    { title: 'Second', url: 'two' },
+  ]);
+  await bot.onChat(chat('!очередь'));
+  assert.deepEqual(calls, [['message', 'Очередь: 1. First | 2. Second']]);
+});
+
+test('!очередь сообщает о пустой очереди даже при играющем треке', async () => {
+  const { bot, calls } = setup();
+  await bot.onChat(chat('!очередь'));
+  assert.deepEqual(calls, [['message', 'Очередь пуста.']]);
 });

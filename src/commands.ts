@@ -1,5 +1,7 @@
+import { setTimeout as delay } from 'node:timers/promises';
 import type { ChatMessage } from './chat-message.ts';
 import type { Twitch } from './twitch.ts';
+import { queueMessages } from './music/queue-messages.ts';
 import type { Music } from './music/queue.ts';
 
 export type { ChatMessage } from './chat-message.ts';
@@ -16,6 +18,16 @@ export function parseCommand(text: string) {
 }
 
 export function createCommands(twitch: Twitch, music: Music): Map<string, Command> {
+  let queueReply: Promise<void> | undefined;
+
+  async function sendQueue(): Promise<void> {
+    const messages = queueMessages(music.queuedTracks);
+    for (const [index, message] of messages.entries()) {
+      if (index > 0) await delay(1100);
+      await twitch.sendMessage(message);
+    }
+  }
+
   return new Map<string, Command>([
     [
       '!песня',
@@ -26,6 +38,17 @@ export function createCommands(twitch: Twitch, music: Music): Map<string, Comman
               ? `Сейчас играет: ${[...music.current.title].slice(0, 450).join('')}`
               : 'Сейчас ничего не играет.',
           ),
+      },
+    ],
+    [
+      '!очередь',
+      {
+        run: () => {
+          queueReply ??= sendQueue().finally(() => {
+            queueReply = undefined;
+          });
+          return queueReply;
+        },
       },
     ],
     ['!пауза', { moderator: true, run: () => music.pause() }],

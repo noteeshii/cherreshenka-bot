@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setImmediate } from 'node:timers/promises';
+import { queueMessages } from '../src/music/queue-messages.ts';
 import { MusicQueue } from '../src/music/queue.ts';
 import type { AudioPlayer } from '../src/music/queue.ts';
 import { youtubeUrl } from '../src/music/youtube.ts';
@@ -11,6 +12,7 @@ const second = 'https://www.youtube.com/watch?v=abcdefghijk';
 
 function setup(
   resolve = async (url: string): Promise<Track> => ({ title: url, url, audioUrl: url }),
+  titleResolver?: (url: string, signal: AbortSignal) => Promise<string>,
 ) {
   const played: string[] = [];
   const pauses: boolean[] = [];
@@ -35,7 +37,7 @@ function setup(
     },
     close: async () => {},
   };
-  const queue = new MusicQueue(player, resolve, (error) => errors.push(error));
+  const queue = new MusicQueue(player, resolve, (error) => errors.push(error), titleResolver);
   return { queue, played, pauses, volumes, errors, finish: () => finish() };
 }
 
@@ -138,4 +140,57 @@ test('громкость передаётся плееру до запуска �
   await queue.setVolume(75);
   assert.deepEqual(volumes, [25, 75]);
   await queue.close();
+});
+
+test('список очереди исключает текущий трек и обновляется после пропуска', async () => {
+  const { queue } = setup();
+  queue.enqueue(first);
+  queue.enqueue(second);
+  await setImmediate();
+  assert.deepEqual(
+    queue.queuedTracks.map((track) => track.url),
+    [second],
+  );
+  await queue.skip();
+  await setImmediate();
+  assert.deepEqual(queue.queuedTracks, []);
+  await queue.close();
+});
+
+test('названия ожидающих треков загружаются без остановки воспроизведения', async () => {
+  const { queue, played } = setup(undefined, async () => 'Queued song');
+  queue.enqueue(first);
+  queue.enqueue(second);
+  await setImmediate();
+  assert.deepEqual(played, [first]);
+  assert.deepEqual(queue.queuedTracks, [{ url: second, title: 'Queued song' }]);
+  await queue.close();
+});
+
+test('ошибка загрузки названия оставляет ссылку и не удаляет заказ', async () => {
+  const { queue } = setup(undefined, async () => {
+    throw new Error('unavailable');
+  });
+  queue.enqueue(first);
+  queue.enqueue(second);
+  await setImmediate();
+  assert.deepEqual(queueMessages(queue.queuedTracks), [`Очередь: 1. ${second}`]);
+  await queue.close();
+});
+
+test('длинная очередь разбивается без потери позиций и превышения 500 символов', () => {
+  const tracks = Array.from({ length: 100 }, (_, index) => ({
+    url: String(index),
+    title: '🍒'.repeat(200),
+  }));
+  const messages = queueMessages(tracks);
+  assert.ok(messages.length > 1);
+  assert.ok(messages.every((message) => [...message].length <= 500));
+  const positions = [...messages.join(' | ').matchAll(/(\d+)\. /g)].map((match) =>
+    Number(match[1]),
+  );
+  assert.deepEqual(
+    positions,
+    Array.from({ length: 100 }, (_, index) => index + 1),
+  );
 });
