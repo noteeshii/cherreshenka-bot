@@ -18,7 +18,7 @@ class Logger {
   }
 
   private checkLevel(level: string) {
-    if (this.config.level !== level || this.config.level !== 'all') {
+    if (this.config.level !== level && this.config.level !== 'all') {
       return false;
     }
 
