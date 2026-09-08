@@ -5,4 +5,5 @@ export { default as ResumeCurrentTrack } from './ResumeCurrentTrack.ts';
 export { default as SkipCurrentTrack } from './SkipCurrentTrack.ts';
 export { default as SetTracksVolume } from './SetTracksVolume.ts';
 export { default as AddTrackToQueue } from './AddTrackToQueue.ts';
+export { default as RemoveTrackFromQueue } from './RemoveTrackFromQueue.ts';
 export type { Action } from './types.ts';

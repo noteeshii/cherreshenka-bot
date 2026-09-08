@@ -18,18 +18,19 @@ export default class AddTrackToQueue implements Action {
   }
 
   public async run(reward: RewardEvent, { music, twitch }: Context) {
-    let isError = false;
-
     try {
-      await music.enqueue(reward.user_input);
+      await music.enqueue({
+        url: reward.user_input,
+        userName: reward.user_login,
+        rewardId: reward.reward.id,
+        redemptionId: reward.id
+      });
     } catch (error) {
-      isError = true;
       await twitch.sendMessage(`@${reward.user_login}, Не удалось добавить трек.`);
-    } finally {
       await twitch.updateRedemptionStatus(
         reward.id,
         reward.reward.id,
-        isError ? 'CANCELED' : 'FULFILLED'
+        'CANCELED'
       );
     }
   }

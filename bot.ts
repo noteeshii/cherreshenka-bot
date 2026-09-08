@@ -10,6 +10,7 @@ import {
   SetTracksVolume,
   SkipCurrentTrack,
   AddTrackToQueue,
+  RemoveTrackFromQueue,
 } from '#actions';
 
 type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
@@ -46,6 +47,7 @@ export class Bot {
       new SetTracksVolume(),
       new SkipCurrentTrack(),
       new AddTrackToQueue(this.config),
+      new RemoveTrackFromQueue()
     ];
   }
 
@@ -62,7 +64,7 @@ export class Bot {
       return;
     }
 
-    await action.run(payload.message, { twitch: this.twitch, music: this.music, logger: this.logger });
+    await action.run(payload, { twitch: this.twitch, music: this.music, logger: this.logger });
 
     commandLogger.debug(`Completed: ${payload.name}`);
   }

@@ -1,6 +1,6 @@
 import type { Config, Logger } from '#extensions';
 
-import Track from './Track.ts';
+import Track, {type TrackProps} from './Track.ts';
 import TrackResolver from './TrackResolver.ts';
 import AudioPlayer from './Player.ts';
 
@@ -8,7 +8,7 @@ export default class Music {
   private readonly config: Config;
   private readonly logger: Logger;
   current: Track | undefined;
-  private readonly waiting: Track[] = [];
+  private waiting: Track[] = [];
   private loading: { url: string; title?: string } | undefined;
   private titleWorker: Promise<void> | undefined;
   private readonly titleAbort = new AbortController();
@@ -31,11 +31,11 @@ export default class Music {
     return entries.map(({ title }) => ({ title }));
   }
 
-  public async enqueue(input: string) {
+  public async enqueue(props: TrackProps) {
     if (this.closed) throw new Error('Музыкальная очередь остановлена.');
     if (this.waiting.length >= 100) throw new Error('Очередь заполнена.');
 
-    const track = await this.resolver.fromUrl(input);
+    const track = await this.resolver.fromProps(props);
 
     this.waiting.push(track);
     this.startWorker();
@@ -53,8 +53,20 @@ export default class Music {
     return this.player.setVolume(volume);
   }
 
-  async skip(): Promise<void> {
+  skip() {
+    const track = this.current;
+
     this.active?.abort();
+
+    return track;
+  }
+
+  cancel(userName: string, idx: number) {
+    const track = this.waiting.find((track, jdx) => track.userName === userName && (idx) === jdx);
+
+    this.waiting = this.waiting.toSpliced(idx, 1);
+
+    return track;
   }
 
   async close(): Promise<void> {

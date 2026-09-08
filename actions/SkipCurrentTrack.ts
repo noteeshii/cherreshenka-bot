@@ -10,6 +10,6 @@ export default class SkipCurrentTrack implements Action {
   }
 
   public async run(_args: unknown, { music }: Context) {
-    await music.skip();
+    music.skip();
   }
 }

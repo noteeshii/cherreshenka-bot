@@ -1,7 +1,8 @@
 import type { Config } from '#extensions';
 
 import { Yandex, YouTube } from './providers/index.ts';
-import Track from './Track.ts';
+import Track, {type TrackProps} from './Track.ts';
+
 
 const youtubeUrl = (input: string) => {
   let url: URL;
@@ -68,12 +69,12 @@ export default class TrackResolver {
     throw new Error('Поддерживаются только видео YouTube и треки Яндекс Музыки.');
   }
 
-  public async fromUrl(input: string) {
+  public async fromProps({url: input, userName, rewardId, redemptionId}: TrackProps) {
     const { provider, url: parsedUrl } = this.getProvider(input);
     const controller = new AbortController();
 
     const { title, url } = await provider.resolve(parsedUrl, controller.signal);
 
-    return new Track(url, title);
+    return new Track(url, title, userName, rewardId, redemptionId);
   }
 }

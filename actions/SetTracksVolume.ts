@@ -9,7 +9,7 @@ export default class SetTracksVolume implements Action {
     return input === this.name;
   }
 
-  public async run(args: string, { music, twitch }: Context) {
+  public async run({message: args}: {message: string}, { music, twitch }: Context) {
     if (!/^(?:[1-9][0-9]?|100)$/.test(args.trim())) {
       return await twitch.sendMessage('Использование: !громкость <1-100> (целое число).');
     }
