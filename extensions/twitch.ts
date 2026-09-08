@@ -89,13 +89,14 @@ export default class Twitch {
     );
   }
 
-  public async cancelRedemption(redemptionId: string, rewardId: string) {
+  public async updateRedemptionStatus(redemptionId: string, rewardId: string, status: 'CANCELED' | 'FULFILLED') {
     await this.ensureSuccess(
       this.client.doAction(
-        { name: 'CancelRewardRedemption' },
+        { name: 'UpdateRedemptionStatus' },
         {
           redemptionId,
-          rewardId
+          rewardId,
+          status
         },
       ),
     );

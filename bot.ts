@@ -12,7 +12,7 @@ import {
   AddTrackToQueue,
 } from '#actions';
 
-type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'> & {redemptionId: string};
+type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
 type CommandEvent = {
   id: string;
   name: string;
@@ -87,8 +87,6 @@ export class Bot {
     }
 
     await action.run(reward, { twitch: this.twitch, music: this.music, logger: this.logger });
-
-    await this.twitch.cancelRedemption(reward.id, reward.reward.id);
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
   }
