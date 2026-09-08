@@ -88,4 +88,16 @@ export default class Twitch {
       ),
     );
   }
+
+  public async cancelRedemption(redemptionId: string, rewardId: string) {
+    await this.ensureSuccess(
+      this.client.doAction(
+        { name: 'CancelRewardRedemption' },
+        {
+          redemptionId,
+          rewardId
+        },
+      ),
+    );
+  }
 }
