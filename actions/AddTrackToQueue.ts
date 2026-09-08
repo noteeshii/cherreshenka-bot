@@ -8,18 +8,6 @@ export default class AddTrackToQueue implements Action {
     this.rewardId = config.rewards.musicRewardId;
   }
 
-  public get name() {
-    return this.constructor.name;
-  }
-
-  public get type() {
-    return 'reward' as const;
-  }
-
-  public get moderator() {
-    return false;
-  }
-
   public check(rewardId: string) {
     return this.rewardId === rewardId;
   }

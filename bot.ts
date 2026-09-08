@@ -12,9 +12,9 @@ import {
   AddTrackToQueue,
 } from '#actions';
 
-
 type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
 type CommandEvent = {
+  id: string;
   name: string;
   command: string;
   message: string;
@@ -63,13 +63,13 @@ export class Bot {
   }
 
   async onCommand(payload: CommandEvent) {
-    const action = this.actions.find((action) => action.name === payload.name);
+    const action = this.actions.find((action) => action.check(payload.name));
 
-    if (!action) {
-      return
+    if (!action || this.isDuplicateEvent(`command:${payload.id}`)) {
+      return;
     }
 
-    await action.run(payload.message, {twitch: this.twitch, music: this.music});
+    await action.run(payload.message, { twitch: this.twitch, music: this.music });
   }
 
   async onReward(reward: RewardEvent): Promise<void> {
@@ -77,9 +77,7 @@ export class Bot {
       return;
     }
 
-    const action = this.actions.find((action) => {
-      return action.type === 'reward' && action.check(reward.reward.id);
-    });
+    const action = this.actions.find((action) => action.check(reward.reward.id));
 
     if (!action || this.isDuplicateEvent(`reward:${reward.id}`)) {
       return;

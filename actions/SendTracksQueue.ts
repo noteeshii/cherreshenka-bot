@@ -1,20 +1,12 @@
 import type { Context, Action } from './types.ts';
 
 export default class SendTracksQueue implements Action {
-  public get name() {
+  private get name() {
     return this.constructor.name;
   }
 
-  public get type() {
-    return 'command' as const;
-  }
-
-  public get moderator() {
-    return false;
-  }
-
   public check(input: string) {
-    return ['!очередь', '!queue'].includes(input);
+    return input === this.name;
   }
 
   public async run(_args: unknown, { twitch, music }: Context) {

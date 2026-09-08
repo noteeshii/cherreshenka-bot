@@ -41,17 +41,11 @@ const music = new Music(config, reportError);
 const twitch = new Twitch(config.streamerBot, client);
 const bot = new Bot(twitch, config, music, logger);
 
-// client.on('Twitch.ChatMessage', ({ data }) => {
-//   bot.onChat(data).catch(reportError);
-// });
-
 client.on('Command.Triggered', ({ data }) => {
-  logger.debug(JSON.stringify(data, undefined, 2));
   bot.onCommand(data).catch(reportError);
 });
 
 client.on('Twitch.RewardRedemption', ({ data }) => {
-  logger.debug(JSON.stringify(data, undefined, 2));
   bot.onReward(data).catch(reportError);
 });
 
