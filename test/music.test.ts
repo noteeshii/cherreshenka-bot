@@ -41,7 +41,7 @@ function setup(
     volumes.push(volume);
   });
   t.mock.method(Player.prototype, 'close', async () => {});
-  const queue = new Music(testConfig(), (error) => errors.push(error));
+  const queue = new Music(testConfig(), {error: (error: string) => errors.push(error)} as any);
   t.after(() => queue.close());
   return { queue, played, pauses, volumes, errors, finish: () => finish() };
 }
@@ -159,6 +159,6 @@ test('ошибка воспроизведения сообщается и не �
   await queue.enqueue(second);
   await setImmediate();
   assert.deepEqual(played, [first, second]);
-  assert.deepEqual(errors, [failure]);
+  assert.deepEqual(errors, [String(failure)]);
   assert.equal(queue.current, undefined);
 });
