@@ -28,8 +28,8 @@ const client = new StreamerbotClient({
     socketLogger.info('Подключено к streamer.bot');
 
     checkChatConnection(client, config)
-      .then(socketLogger.info)
-      .catch(socketLogger.error);
+      .then(socketLogger.info.bind(socketLogger))
+      .catch(socketLogger.error.bind(socketLogger));
   },
   onDisconnect: () => socketLogger.warn('Соединение закрыто; ожидается переподключение'),
   onError: (error) => socketLogger.error(`Ошибка WebSocket: ${error.message}`),
@@ -40,11 +40,11 @@ const twitch = new Twitch(config.streamerBot, client);
 const bot = new Bot(twitch, config, music, logger.withContext('Bot'));
 
 client.on('Command.Triggered', ({ data }) => {
-  bot.onCommand(data).catch(socketLogger.error);
+  bot.onCommand(data).catch(socketLogger.error.bind(socketLogger));
 });
 
 client.on('Twitch.RewardRedemption', ({ data }) => {
-  bot.onReward(data).catch(socketLogger.error);
+  bot.onReward(data).catch(socketLogger.error.bind(socketLogger));
 });
 
 let stopping = false;
