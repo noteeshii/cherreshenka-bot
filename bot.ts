@@ -88,7 +88,7 @@ export class Bot {
 
     await action.run(reward, { twitch: this.twitch, music: this.music, logger: this.logger });
 
-    await this.twitch.cancelRedemption(reward.redemptionId, reward.reward.id);
+    await this.twitch.cancelRedemption(reward.id, reward.reward.id);
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
   }
