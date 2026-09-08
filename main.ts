@@ -46,7 +46,7 @@ client.on('Twitch.ChatMessage', ({ data }) => {
 });
 
 client.on('Command.Triggered', ({ data }) => {
-  logger.info('TODO: Command.Triggered');
+  logger.debug(JSON.stringify(data, undefined, 2));
 });
 
 client.on('Twitch.RewardRedemption', ({ data }) => {
