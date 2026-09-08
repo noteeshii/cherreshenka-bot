@@ -30,9 +30,9 @@ export class Bot {
   private readonly twitch: Twitch;
   private readonly music: Music;
   private readonly config: Config;
-  private readonly logger: Pick<Logger, 'info'>;
+  private readonly logger: Logger;
 
-  constructor(twitch: Twitch, config: Config, music: Music, logger: Pick<Logger, 'info'>) {
+  constructor(twitch: Twitch, config: Config, music: Music, logger: Logger) {
     this.twitch = twitch;
     this.music = music;
     this.config = config;
@@ -50,26 +50,44 @@ export class Bot {
   }
 
   async onCommand(payload: CommandEvent) {
+    const commandLogger = this.logger.withContext('Command');
+
+    commandLogger.debug(`Starting: ${payload.name}`);
+
     const action = this.actions.find((action) => action.check(payload.name));
 
     if (!action) {
+      commandLogger.debug(`Action not found: ${payload.name}`);
+
       return;
     }
 
-    await action.run(payload.message, { twitch: this.twitch, music: this.music });
+    await action.run(payload.message, { twitch: this.twitch, music: this.music, logger: this.logger });
+
+    commandLogger.debug(`Completed: ${payload.name}`);
   }
 
   async onReward(reward: RewardEvent): Promise<void> {
+    const rewardLogger = this.logger.withContext('Reward');
+
+    rewardLogger.debug(`Starting action: ${reward.reward.title}`);
+
     if (!reward?.id || !reward.reward?.id || reward.status?.toLowerCase() === 'canceled') {
+      rewardLogger.debug(`Not enough data: ${reward}`);
+
       return;
     }
 
     const action = this.actions.find((action) => action.check(reward.reward.id));
 
     if (!action) {
+      rewardLogger.debug(`Action not found: ${reward.reward.title}`);
+
       return;
     }
 
-    await action.run(reward, { twitch: this.twitch, music: this.music });
+    await action.run(reward, { twitch: this.twitch, music: this.music, logger: this.logger });
+
+    rewardLogger.debug(`Completed: ${reward.reward.title}`);
   }
 }

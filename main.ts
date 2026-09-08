@@ -7,16 +7,12 @@ import { Config, Logger, Music, Twitch } from '#extensions';
 import { Bot } from './bot.ts';
 import { checkChatConnection } from './chat-connection.ts';
 
-function reportError(error: unknown): void {
-  const message = error instanceof Error ? error.message : 'неизвестная ошибка';
-  console.error('Ошибка обработки события:', message);
-}
-
 const config = Config.fromEnv();
 const logger = Logger.fromConfig(config);
 
 await checkMusicDependencies(config.music.mpvPath, config.music.ytDlpPath);
 
+const socketLogger = logger.withContext('WebSocket');
 const client = new StreamerbotClient({
   ...config.connection,
   immediate: false,
@@ -25,28 +21,30 @@ const client = new StreamerbotClient({
   logLevel: 'warn',
   onData: (payload) => {
     if (payload?.event?.source && payload?.event?.type) {
-      logger.withContext('WebSocket').info(`${payload.event.source}.${payload.event.type}`);
+      socketLogger.info(`${payload.event.source}.${payload.event.type}`);
     }
   },
   onConnect: () => {
-    logger.info('Подключено к streamer.bot');
+    socketLogger.info('Подключено к streamer.bot');
 
-    checkChatConnection(client, config).then(console.info).catch(reportError);
+    checkChatConnection(client, config)
+      .then(socketLogger.info)
+      .catch(socketLogger.error);
   },
-  onDisconnect: () => console.warn('Соединение закрыто; ожидается переподключение'),
-  onError: (error) => console.error('Ошибка WebSocket:', error.message),
+  onDisconnect: () => socketLogger.warn('Соединение закрыто; ожидается переподключение'),
+  onError: (error) => socketLogger.error(`Ошибка WebSocket: ${error.message}`),
 });
 
-const music = new Music(config, reportError);
+const music = new Music(config, logger.withContext('Music'));
 const twitch = new Twitch(config.streamerBot, client);
-const bot = new Bot(twitch, config, music, logger);
+const bot = new Bot(twitch, config, music, logger.withContext('Bot'));
 
 client.on('Command.Triggered', ({ data }) => {
-  bot.onCommand(data).catch(reportError);
+  bot.onCommand(data).catch(socketLogger.error);
 });
 
 client.on('Twitch.RewardRedemption', ({ data }) => {
-  bot.onReward(data).catch(reportError);
+  bot.onReward(data).catch(socketLogger.error);
 });
 
 let stopping = false;
@@ -59,11 +57,11 @@ const shutdown = () => {
   stopping = true;
 
   Promise.all([music.close(), client.disconnect()])
-    .catch(reportError)
+    .catch(logger.error)
     .finally(() => process.exit(0));
 };
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-await client.connect().catch(reportError);
+await client.connect().catch(logger.error);

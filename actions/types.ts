@@ -1,8 +1,9 @@
-import { Twitch, Music } from '#extensions';
+import { Twitch, Music, Logger } from '#extensions';
 
 export interface Context {
   twitch: Twitch;
   music: Music;
+  logger: Logger;
 }
 
 export interface Action {

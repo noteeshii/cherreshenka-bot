@@ -9,11 +9,12 @@ export default class SendTracksQueue implements Action {
     return input === this.name;
   }
 
-  public async run(_args: unknown, { twitch, music }: Context) {
+  public async run(_args: unknown, { twitch, music, logger }: Context) {
     const tracks = music.queuedTracks;
 
     if (!tracks.length) {
-      return await twitch.sendMessage('Очередь пуста.');
+      return await twitch.sendMessage('Очередь пуста.')
+        .catch(logger.error);
     }
 
     const messages: string[] = [];
@@ -25,6 +26,7 @@ export default class SendTracksQueue implements Action {
       messages.push(entry);
     }
 
-    await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`);
+    await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`)
+      .catch(logger.error);
   }
 }

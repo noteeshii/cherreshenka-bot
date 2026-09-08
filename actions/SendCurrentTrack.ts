@@ -9,9 +9,10 @@ export default class SendCurrentTrack implements Action {
     return input === this.name;
   }
 
-  public async run(_args: unknown, { twitch, music }: Context) {
+  public async run(_args: unknown, { twitch, music, logger }: Context) {
     await twitch.sendMessage(
       music.current ? `Сейчас играет: ${music.current.title}` : 'Сейчас ничего не играет.',
-    );
+    )
+      .catch(logger.error);
   }
 }

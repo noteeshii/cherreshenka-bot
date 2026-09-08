@@ -1,10 +1,12 @@
-import type { Config } from '#extensions';
+import type { Config, Logger } from '#extensions';
+
 import Track from './Track.ts';
 import TrackResolver from './TrackResolver.ts';
 import AudioPlayer from './Player.ts';
 
 export default class Music {
   private readonly config: Config;
+  private readonly logger: Logger;
   current: Track | undefined;
   private readonly waiting: Track[] = [];
   private loading: { url: string; title?: string } | undefined;
@@ -12,16 +14,15 @@ export default class Music {
   private readonly titleAbort = new AbortController();
   private readonly player: AudioPlayer;
   private readonly resolver: TrackResolver;
-  private readonly reportError: (error: unknown) => void;
   private worker: Promise<void> | undefined;
   private active: AbortController | undefined;
   private closed = false;
 
-  constructor(config: Config, reportError: (error: unknown) => void) {
+  constructor(config: Config, logger: Logger) {
     this.config = config;
+    this.logger = logger;
     this.player = new AudioPlayer(this.config.music);
     this.resolver = new TrackResolver(this.config);
-    this.reportError = reportError;
   }
 
   public get queuedTracks() {
@@ -85,7 +86,7 @@ export default class Music {
         this.current = entry;
         await this.player.play(entry, controller.signal);
       } catch (error) {
-        if (!controller.signal.aborted) this.reportError(error);
+        if (!controller.signal.aborted) this.logger.error(String(error));
       } finally {
         this.loading = undefined;
         this.current = undefined;

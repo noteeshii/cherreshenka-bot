@@ -9,7 +9,8 @@ export default class PauseCurrentTrack implements Action {
     return input === this.name;
   }
 
-  public async run(_args: unknown, { music }: Context) {
-    await music.pause();
+  public async run(_args: unknown, { music, logger }: Context) {
+    await music.pause()
+      .catch(logger.error);
   }
 }

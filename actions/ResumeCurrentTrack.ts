@@ -9,7 +9,8 @@ export default class ResumeCurrentTrack implements Action {
     return input === this.name;
   }
 
-  public async run(_args: unknown, { music }: Context) {
-    await music.resume();
+  public async run(_args: unknown, { music, logger }: Context) {
+    await music.resume()
+      .catch(logger.error);
   }
 }
