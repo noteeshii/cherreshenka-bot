@@ -7,11 +7,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
-import type { AudioPlayer } from './queue.ts';
-import type { Track } from './media.ts';
+
+import type { Config } from '#extensions';
+import type Track from './Track.ts';
 
 // One mpv process per track: its exit marks the end of playback, including skips.
-export class MpvPlayer implements AudioPlayer {
+export default class Player {
   private readonly binary: string;
   private process: ChildProcess | undefined;
   private socketPath: string | undefined;
@@ -19,8 +20,8 @@ export class MpvPlayer implements AudioPlayer {
   private volume = 50;
   private volumeUpdate: Promise<void> = Promise.resolve();
 
-  constructor(binary: string) {
-    this.binary = binary;
+  constructor(config: Config['music']) {
+    this.binary = config.mpvPath;
   }
 
   async play(track: Track, signal: AbortSignal): Promise<void> {
@@ -44,7 +45,7 @@ export class MpvPlayer implements AudioPlayer {
           `--volume=${this.volume}`,
           `--input-ipc-server=${socketPath}`,
           '--',
-          track.audioUrl,
+          track.url,
         ],
         { stdio: 'ignore', windowsHide: true },
       );

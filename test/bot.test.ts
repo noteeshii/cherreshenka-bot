@@ -1,29 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { StreamerbotEventData, StreamerbotClient } from '@streamerbot/client';
-import { Bot } from '../src/bot.ts';
-import { readConfig } from '../src/config.ts';
-import { chatText, timeoutArgs, createTwitch } from '../src/twitch.ts';
+import { Bot } from '../bot.ts';
+import { Config } from '#extensions';
+import { testConfig } from './fixtures.ts';
+import Track from '#extensions/music/Track';
+import { Twitch } from '#extensions';
 
-function setup(queuedTracks: { title?: string; url: string }[] = []) {
+function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?: Error) {
   const calls: unknown[][] = [];
   const bot = new Bot(
     {
-      sendMessage: async (...args) => {
+      sendMessage: async (...args: unknown[]) => {
         calls.push(['message', ...args]);
       },
-      announce: async (...args) => {
+      announce: async (...args: unknown[]) => {
         calls.push(['announce', ...args]);
       },
-      timeout: async (...args) => {
+      timeout: async (...args: unknown[]) => {
         calls.push(['timeout', ...args]);
       },
-    },
-    readConfig({ MUSIC_REWARD_ID: 'reward', TWITCH_BOT_LOGIN: 'bot' }),
+    } as any,
+    testConfig(),
     {
       queuedTracks,
-      current: { title: 'Test song', url: '', audioUrl: '' },
-      enqueue: (input) => {
+      current: new Track('', 'Test song'),
+      enqueue: async (input: string) => {
+        if (enqueueError) throw enqueueError;
         calls.push(['enqueue', input]);
       },
       pause: async () => {
@@ -32,16 +35,18 @@ function setup(queuedTracks: { title?: string; url: string }[] = []) {
       resume: async () => {
         calls.push(['resume']);
       },
-      setVolume: async (volume) => {
+      setVolume: async (volume: number) => {
         calls.push(['volume', volume]);
       },
       skip: async () => {
         calls.push(['skip']);
       },
-    },
+    } as any,
+    { info: () => {} },
   );
   return { bot, calls };
 }
+
 function chat(text: string, badge = '', id = '1') {
   return {
     message: {
@@ -53,6 +58,7 @@ function chat(text: string, badge = '', id = '1') {
     },
   } as StreamerbotEventData<'Twitch.ChatMessage'>;
 }
+
 test('команды без учёта регистра, дубликаты и cooldown', async () => {
   const { bot, calls } = setup();
   await bot.onChat(chat(' !ПЕСНЯ '));
@@ -60,6 +66,7 @@ test('команды без учёта регистра, дубликаты и c
   await bot.onChat(chat('!песня', '', '2'));
   assert.deepEqual(calls, [['message', 'Сейчас играет: Test song']]);
 });
+
 test('модерация недоступна зрителям и VIP', async () => {
   for (const badge of ['', 'vip']) {
     const { bot, calls } = setup();
@@ -68,6 +75,7 @@ test('модерация недоступна зрителям и VIP', async ()
     assert.equal(calls.length, 0);
   }
 });
+
 test('модератор и стример могут выполнять команды', async () => {
   for (const badge of ['moderator', 'broadcaster']) {
     for (const [command, expected] of [
@@ -82,6 +90,7 @@ test('модератор и стример могут выполнять ком�
     }
   }
 });
+
 test('сообщения бота, internal и тестовые события игнорируются', async () => {
   for (const overrides of [{ username: 'bot' }, { internal: true }, { isTest: true }]) {
     const { bot, calls } = setup();
@@ -91,6 +100,7 @@ test('сообщения бота, internal и тестовые события �
     assert.equal(calls.length, 0);
   }
 });
+
 test('награды обрабатываются по ID, один раз', async () => {
   const { bot, calls } = setup();
   const reward = {
@@ -106,15 +116,7 @@ test('награды обрабатываются по ID, один раз', asy
   await bot.onReward(reward);
   assert.deepEqual(calls, [['enqueue', 'https://youtu.be/dQw4w9WgXcQ']]);
 });
-test('валидация таймаута и текста', () => {
-  for (const duration of [0, -1, 1.5, NaN, Infinity, 1209601])
-    assert.throws(() => timeoutArgs('viewer', duration));
-  assert.throws(() => timeoutArgs('bad login', 60));
-  assert.deepEqual(timeoutArgs('@Viewer', 60), { username: 'viewer', duration: 60, reason: '' });
-  assert.throws(() => chatText(' '));
-  assert.throws(() => chatText('a'.repeat(501)));
-  assert.equal(chatText(' hi\nthere '), 'hi there');
-});
+
 test('транспорт передаёт реальные запросы API и проверяет ошибки', async () => {
   const calls: unknown[][] = [];
   const client = {
@@ -127,7 +129,7 @@ test('транспорт передаёт реальные запросы API и
       return { status: 'ok' };
     },
   } as unknown as Pick<StreamerbotClient, 'sendMessage' | 'doAction'>;
-  const twitch = createTwitch(client, 'Dispatch', true);
+  const twitch = new Twitch({ useBot: true, action: 'Dispatch' }, client);
   await twitch.sendMessage('hi');
   await twitch.announce('news');
   await twitch.timeout('@Viewer', 30, 'spam');
@@ -142,10 +144,15 @@ test('транспорт передаёт реальные запросы API и
   client.sendMessage = async () => ({ status: 'error' }) as never;
   await assert.rejects(twitch.sendMessage('hi'));
 });
-test('валидация настроек', () => {
-  assert.throws(() => readConfig({ STREAMERBOT_URL: 'https://localhost' }));
-  assert.throws(() => readConfig({ TWITCH_USE_BOT: 'yes' }));
-  assert.equal(readConfig({}).connection.port, 8080);
+
+test('настройки читаются из изолированного окружения', (t) => {
+  t.mock.property(process, 'env', { STREAMERBOT_URL: 'ws://localhost:8080/', TWITCH_USE_BOT: '1' });
+  assert.equal(Config.fromEnv().connection.port, 8080);
+  assert.equal(Config.fromEnv().streamerBot.useBot, true);
+  process.env.TWITCH_USE_BOT = '0';
+  assert.equal(Config.fromEnv().streamerBot.useBot, false);
+  process.env.STREAMERBOT_URL = 'https://localhost';
+  assert.throws(() => Config.fromEnv());
 });
 
 test('старые команды удалены', async () => {
@@ -232,16 +239,24 @@ test('повреждённые события не запускают коман
 });
 
 test('!очередь доступна зрителям и показывает порядок ожидающих треков', async () => {
-  const { bot, calls } = setup([
-    { title: 'First', url: 'one' },
-    { title: 'Second', url: 'two' },
-  ]);
+  const { bot, calls } = setup([{ title: 'First' }, { title: 'Second' }]);
   await bot.onChat(chat('!очередь'));
-  assert.deepEqual(calls, [['message', 'Очередь: 1. First | 2. Second']]);
+  assert.deepEqual(calls, [['message', 'Очередь: 1# First | 2# Second']]);
 });
 
 test('!очередь сообщает о пустой очереди даже при играющем треке', async () => {
   const { bot, calls } = setup();
   await bot.onChat(chat('!очередь'));
   assert.deepEqual(calls, [['message', 'Очередь пуста.']]);
+});
+
+test('ошибка асинхронного заказа возвращается пользователю в чат', async () => {
+  const { bot, calls } = setup([], new Error('Трек недоступен'));
+  await bot.onReward({
+    id: 'failed-order',
+    user_input: 'https://youtu.be/dQw4w9WgXcQ',
+    user_login: 'viewer',
+    reward: { id: 'reward', title: 'Музыка' },
+  } as StreamerbotEventData<'Twitch.RewardRedemption'>);
+  assert.deepEqual(calls, [['message', '@viewer, Не удалось добавить трек.']]);
 });

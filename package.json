@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "node --env-file-if-exists=.env src/main.ts",
-    "dev": "node --watch --env-file-if-exists=.env src/main.ts",
+    "start": "node --env-file-if-exists=.env main.ts",
+    "dev": "node --watch --env-file-if-exists=.env main.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.ts",
     "check": "npm run format:check && npm run typecheck && npm test",
@@ -23,5 +23,13 @@
   },
   "engines": {
     "node": ">=22.18.0"
+  },
+  "imports": {
+    "#actions": "./actions/index.ts",
+    "#actions/*.ts": "./actions/*.ts",
+    "#actions/*": "./actions/*.ts",
+    "#extensions": "./extensions/index.ts",
+    "#extensions/*.ts": "./extensions/*.ts",
+    "#extensions/*": "./extensions/*.ts"
   }
 }

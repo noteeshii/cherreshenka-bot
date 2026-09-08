@@ -1,9 +1,9 @@
 import type { StreamerbotClient } from '@streamerbot/client';
-import type { Config } from './config.ts';
+import type { Config } from '#extensions';
 
 type ChatConnection = Pick<StreamerbotClient, 'authenticated' | 'getBroadcaster'>;
 
-export async function checkChatConnection(client: ChatConnection, config: Config): Promise<string> {
+export const checkChatConnection = async (client: ChatConnection, config: Config) => {
   if (!client.authenticated) {
     throw new Error(
       'WebSocket подключён без авторизации: отправка в чат недоступна. Включите Authentication в WebSocket Server streamer.bot и задайте тот же пароль в STREAMERBOT_PASSWORD в .env.',
@@ -23,16 +23,16 @@ export async function checkChatConnection(client: ChatConnection, config: Config
       'Подключите Twitch Bot Account в streamer.bot: музыкальные ответы отправляются от него.',
     );
   }
-  if (config.channel && config.channel !== twitch.broadcastUser.toLowerCase()) {
+  if (config.channel.name !== twitch.broadcastUser.toLowerCase()) {
     throw new Error(
       'TWITCH_CHANNEL не совпадает с каналом streamer.bot; команды этого канала будут игнорироваться.',
     );
   }
-  if (config.botLogin && config.botLogin !== twitch.botUser.toLowerCase()) {
+  if (config.channel.botLogin !== twitch.botUser.toLowerCase()) {
     throw new Error(
       'TWITCH_BOT_LOGIN не совпадает с Bot Account в streamer.bot. Укажите логин Bot Account.',
     );
   }
 
   return `Авторизация WebSocket подтверждена. Канал: ${twitch.broadcastUser}; аккаунт для ответов: ${twitch.botUser}. Проверка: !песня с аккаунта зрителя или стримера.`;
-}
+};

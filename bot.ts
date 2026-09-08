@@ -1,13 +1,22 @@
 import type { StreamerbotEventData } from '@streamerbot/client';
+
+import type { Music, Twitch, Config, Logger } from '#extensions';
+import {
+  type Action,
+  PauseCurrentTrack,
+  ResumeCurrentTrack,
+  SendCurrentTrack,
+  SendTracksQueue,
+  SetTracksVolume,
+  SkipCurrentTrack,
+  AddTrackToQueue,
+} from '#actions';
+
 import { parseChatMessage } from './chat-message.ts';
-import { createCommands, parseCommand } from './commands.ts';
-import type { ChatMessage, Command } from './commands.ts';
-import type { Config } from './config.ts';
-import type { Twitch } from './twitch.ts';
-import type { Music } from './music/queue.ts';
+import { parseCommand } from './commands.ts';
+import type { ChatMessage } from './commands.ts';
 
 type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
-type RewardHandler = (reward: RewardEvent) => Promise<void>;
 
 const EVENT_RETENTION_MS = 10 * 60 * 1000;
 const MAX_TRACKED_EVENTS = 10_000;
@@ -29,27 +38,30 @@ function isModerator(message: ChatMessage): boolean {
 }
 
 export class Bot {
-  readonly commands: Map<string, Command>;
-  readonly rewards = new Map<string, RewardHandler>();
+  private readonly actions: Action[];
 
   private readonly seenEvents = new Map<string, number>();
   private readonly userCooldowns = new Map<string, number>();
+  private readonly twitch: Twitch;
+  private readonly music: Music;
   private readonly config: Config;
+  private readonly logger: Pick<Logger, 'info'>;
 
-  constructor(twitch: Twitch, config: Config, music: Music) {
+  constructor(twitch: Twitch, config: Config, music: Music, logger: Pick<Logger, 'info'>) {
+    this.twitch = twitch;
+    this.music = music;
     this.config = config;
-    this.commands = createCommands(twitch, music);
+    this.logger = logger;
 
-    if (config.musicRewardId) {
-      this.rewards.set(config.musicRewardId, async (reward) => {
-        try {
-          music.enqueue(reward.user_input);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Не удалось добавить трек.';
-          await twitch.sendMessage(`@${reward.user_login}, ${message}`);
-        }
-      });
-    }
+    this.actions = [
+      new PauseCurrentTrack(),
+      new ResumeCurrentTrack(),
+      new SendCurrentTrack(),
+      new SendTracksQueue(),
+      new SetTracksVolume(),
+      new SkipCurrentTrack(),
+      new AddTrackToQueue(this.config),
+    ];
   }
 
   async onChat(payload: unknown): Promise<void> {
@@ -72,22 +84,28 @@ export class Bot {
     this.trace(
       `Получена команда ${parsed.name}; канал=${message.channel}; пользователь=${message.username}`,
     );
-    const command = this.commands.get(parsed.name);
-    if (!command || (command.moderator && !isModerator(message))) {
-      this.trace(!command ? 'Пропуск: неизвестная команда.' : 'Пропуск: нет прав модератора.');
+
+    const action = this.actions.find((action) => {
+      return action.type === 'command' && action.check(parsed.name);
+    });
+
+    if (!action || (action.moderator && !isModerator(message))) {
+      this.trace(!action ? 'Пропуск: неизвестная команда.' : 'Пропуск: нет прав модератора.');
       return;
     }
     if (this.isDuplicateEvent(`chat:${message.msgId}`)) {
       this.trace('Пропуск: повторное событие.');
       return;
     }
-    if (!command.moderator && this.isOnCooldown(message.userId)) {
+    if (!action.moderator && this.isOnCooldown(message.userId)) {
       this.trace('Пропуск: cooldown 3 секунды.');
       return;
     }
 
     this.trace(`Выполнение ${parsed.name}`);
-    await command.run(parsed.args, message);
+
+    await action.run(parsed.args, { twitch: this.twitch, music: this.music });
+
     this.trace(`Обработчик ${parsed.name} завершён.`);
   }
 
@@ -96,18 +114,22 @@ export class Bot {
       return;
     }
 
-    const handler = this.rewards.get(reward.reward.id);
-    if (!handler || this.isDuplicateEvent(`reward:${reward.id}`)) {
+    const action = this.actions.find((action) => {
+      return action.type === 'reward' && action.check(reward.reward.id);
+    });
+
+    if (!action || this.isDuplicateEvent(`reward:${reward.id}`)) {
       return;
     }
 
-    await handler(reward);
+    await action.run(reward, { twitch: this.twitch, music: this.music });
   }
 
   private shouldIgnoreMessage(message: ChatMessage): boolean {
-    const isBotMessage = message.username?.toLowerCase() === this.config.botLogin;
+    const isBotMessage = message.username?.toLowerCase() === this.config.channel.botLogin;
     const isOtherChannel =
-      this.config.channel !== '' && message.channel?.toLowerCase() !== this.config.channel;
+      this.config.channel.name !== '' &&
+      message.channel?.toLowerCase() !== this.config.channel.name;
 
     const reason = message.internal
       ? 'внутреннее сообщение'
@@ -123,7 +145,7 @@ export class Bot {
   }
 
   private trace(message: string): void {
-    if (this.config.debugChat) console.info(`[Chat] ${message}`);
+    this.logger.info(`[Chat] ${message}`);
   }
 
   // Reserve the event before awaiting a handler to prevent concurrent duplicates.

@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { StreamerbotClient } from '@streamerbot/client';
-import { checkChatConnection } from '../src/chat-connection.ts';
-import { readConfig } from '../src/config.ts';
-import { createTwitch } from '../src/twitch.ts';
+
+import { Twitch } from '#extensions';
+
+import { testConfig } from './fixtures.ts';
+import { checkChatConnection } from '../chat-connection.ts';
 
 function connection(authenticated = true, botUser = 'bot') {
   return {
@@ -18,22 +20,34 @@ function connection(authenticated = true, botUser = 'bot') {
 
 test('подключение без авторизации объясняет необходимость пароля', async () => {
   await assert.rejects(
-    checkChatConnection(connection(false), readConfig({})),
+    checkChatConnection(
+      connection(false),
+      testConfig({ channel: { name: 'streamer', botLogin: 'bot' } }),
+    ),
     /STREAMERBOT_PASSWORD/,
   );
 });
 
 test('проверка обнаруживает отсутствующий Bot Account и неверный канал', async () => {
-  await assert.rejects(checkChatConnection(connection(true, ''), readConfig({})), /Bot Account/);
   await assert.rejects(
-    checkChatConnection(connection(), readConfig({ TWITCH_CHANNEL: 'wrong' })),
+    checkChatConnection(
+      connection(true, ''),
+      testConfig({ channel: { name: 'streamer', botLogin: 'bot' } }),
+    ),
+    /Bot Account/,
+  );
+  await assert.rejects(
+    checkChatConnection(connection(), testConfig({ channel: { name: 'wrong', botLogin: 'bot' } })),
     /TWITCH_CHANNEL/,
   );
 });
 
 test('проверка сообщает выбранные аккаунты без отправки сообщения', async () => {
   assert.match(
-    await checkChatConnection(connection(), readConfig({})),
+    await checkChatConnection(
+      connection(),
+      testConfig({ channel: { name: 'streamer', botLogin: 'bot' } }),
+    ),
     /Канал: streamer; аккаунт для ответов: bot/,
   );
 });
@@ -46,6 +60,9 @@ test('SendMessage сохраняет причину ошибки и объясн
     const client = {
       sendMessage: async () => ({ status: 'error', error }),
     } as unknown as StreamerbotClient;
-    await assert.rejects(createTwitch(client, 'Dispatch', true).sendMessage('test'), expected);
+    await assert.rejects(
+      new Twitch({ useBot: true, action: 'Dispatch' }, client).sendMessage('test'),
+      expected,
+    );
   }
 });
