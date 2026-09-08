@@ -11,6 +11,6 @@ export default class ResumeCurrentTrack implements Action {
 
   public async run(_args: unknown, { music, logger }: Context) {
     await music.resume()
-      .catch(logger.error);
+      .catch(logger.error.bind(logger));
   }
 }

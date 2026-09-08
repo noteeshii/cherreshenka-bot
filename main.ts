@@ -57,11 +57,11 @@ const shutdown = () => {
   stopping = true;
 
   Promise.all([music.close(), client.disconnect()])
-    .catch(logger.error)
+    .catch(logger.error.bind(logger))
     .finally(() => process.exit(0));
 };
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-await client.connect().catch(logger.error);
+await client.connect().catch(logger.error.bind(logger));

@@ -11,6 +11,6 @@ export default class PauseCurrentTrack implements Action {
 
   public async run(_args: unknown, { music, logger }: Context) {
     await music.pause()
-      .catch(logger.error);
+      .catch(logger.error.bind(logger));
   }
 }

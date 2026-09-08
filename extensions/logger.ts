@@ -26,7 +26,7 @@ class Logger {
   }
 
   public error(message: string) {
-    if (this.checkLevel('error')) {
+    if (!this.checkLevel('error')) {
       return;
     }
     const localContext = ['Error'].concat(this.context);
@@ -35,7 +35,7 @@ class Logger {
   }
 
   public warn(message: string) {
-    if (this.checkLevel('warn')) {
+    if (!this.checkLevel('warn')) {
       return;
     }
     const localContext = ['Warn'].concat(this.context);
@@ -44,7 +44,7 @@ class Logger {
   }
 
   public info(message: string) {
-    if (this.checkLevel('info')) {
+    if (!this.checkLevel('info')) {
       return;
     }
 
@@ -54,7 +54,7 @@ class Logger {
   }
 
   public debug(message: string) {
-    if (this.checkLevel('debug')) {
+    if (!this.checkLevel('debug')) {
       return;
     }
 

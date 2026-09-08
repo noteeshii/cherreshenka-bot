@@ -14,7 +14,7 @@ export default class SendTracksQueue implements Action {
 
     if (!tracks.length) {
       return await twitch.sendMessage('Очередь пуста.')
-        .catch(logger.error);
+        .catch(logger.error.bind(logger));
     }
 
     const messages: string[] = [];
@@ -27,6 +27,6 @@ export default class SendTracksQueue implements Action {
     }
 
     await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`)
-      .catch(logger.error);
+      .catch(logger.error.bind(logger));
   }
 }

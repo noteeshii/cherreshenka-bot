@@ -13,6 +13,6 @@ export default class SendCurrentTrack implements Action {
     await twitch.sendMessage(
       music.current ? `Сейчас играет: ${music.current.title}` : 'Сейчас ничего не играет.',
     )
-      .catch(logger.error);
+      .catch(logger.error.bind(logger));
   }
 }
