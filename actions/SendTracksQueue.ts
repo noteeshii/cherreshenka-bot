@@ -16,8 +16,16 @@ export default class SendTracksQueue implements Action {
       return await twitch.sendMessage('Очередь пуста.')
         .catch(logger.error.bind(logger));
     }
+    const messages: string[] = [];
 
-    await twitch.sendMessage(`В очереди ${tracks.length} треков.`)
+    for (const [index, track] of tracks.entries()) {
+      const title = (track.title || 'Название не найдено').replace(/[\r\n]+/g, ' ').trim();
+      const entry = `${index + 1}# ${title}`;
+
+      messages.push(entry);
+    }
+
+    await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`)
       .catch(logger.error.bind(logger));
   }
 }
