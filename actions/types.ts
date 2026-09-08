@@ -6,8 +6,8 @@ export interface Context {
 }
 
 export interface Action {
+  name: string;
   type: 'command' | 'reward';
   check(input: string): boolean;
-  moderator: boolean;
   run(args: unknown, context: Context): Promise<void>;
 }

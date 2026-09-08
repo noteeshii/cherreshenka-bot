@@ -1,6 +1,10 @@
 import type { Context, Action } from './types.ts';
 
 export default class SendTracksQueue implements Action {
+  public get name() {
+    return this.constructor.name;
+  }
+
   public get type() {
     return 'command' as const;
   }

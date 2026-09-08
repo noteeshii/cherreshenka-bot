@@ -1,6 +1,10 @@
 import type { Context, Action } from './types.ts';
 
 export default class SendCurrentTrack implements Action {
+  public get name() {
+    return this.constructor.name;
+  }
+
   public get type() {
     return 'command' as const;
   }
@@ -10,7 +14,7 @@ export default class SendCurrentTrack implements Action {
   }
 
   public check(input: string) {
-    return ['!песня', '!трек','!track', '!song'].includes(input);
+    return ['!песня', '!трек', '!track', '!song'].includes(input);
   }
 
   public async run(_args: unknown, { twitch, music }: Context) {
