@@ -25,21 +25,8 @@ type CommandEvent = {
   };
 };
 
-const EVENT_RETENTION_MS = 10 * 60 * 1000;
-const MAX_TRACKED_EVENTS = 10_000;
-
-function removeExpiredEntries(entries: Map<string, number>, now: number): void {
-  for (const [key, expiresAt] of entries) {
-    if (expiresAt <= now) {
-      entries.delete(key);
-    }
-  }
-}
-
 export class Bot {
   private readonly actions: Action[];
-
-  private readonly seenEvents = new Map<string, number>();
   private readonly twitch: Twitch;
   private readonly music: Music;
   private readonly config: Config;
@@ -65,7 +52,7 @@ export class Bot {
   async onCommand(payload: CommandEvent) {
     const action = this.actions.find((action) => action.check(payload.name));
 
-    if (!action || this.isDuplicateEvent(`command:${payload.id}`)) {
+    if (!action) {
       return;
     }
 
@@ -79,29 +66,10 @@ export class Bot {
 
     const action = this.actions.find((action) => action.check(reward.reward.id));
 
-    if (!action || this.isDuplicateEvent(`reward:${reward.id}`)) {
+    if (!action) {
       return;
     }
 
     await action.run(reward, { twitch: this.twitch, music: this.music });
-  }
-
-  // Reserve the event before awaiting a handler to prevent concurrent duplicates.
-  private isDuplicateEvent(key: string): boolean {
-    const now = Date.now();
-    removeExpiredEntries(this.seenEvents, now);
-
-    if (this.seenEvents.has(key)) {
-      return true;
-    }
-    if (this.seenEvents.size >= MAX_TRACKED_EVENTS) {
-      const oldestKey = this.seenEvents.keys().next().value;
-      if (oldestKey !== undefined) {
-        this.seenEvents.delete(oldestKey);
-      }
-    }
-
-    this.seenEvents.set(key, now + EVENT_RETENTION_MS);
-    return false;
   }
 }
