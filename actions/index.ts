@@ -1,5 +1,6 @@
 export { default as SendCurrentTrack } from './SendCurrentTrack.ts';
 export { default as SendTracksQueue } from './SendTracksQueue.ts';
+export { default as SendTracksQueueSize } from './SendTracksQueueSize.ts';
 export { default as PauseCurrentTrack } from './PauseCurrentTrack.ts';
 export { default as ResumeCurrentTrack } from './ResumeCurrentTrack.ts';
 export { default as SkipCurrentTrack } from './SkipCurrentTrack.ts';
