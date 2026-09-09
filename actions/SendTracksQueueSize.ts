@@ -1,5 +1,3 @@
-import {getPluralForm} from '#utils';
-
 import type { Context, Action } from './types.ts';
 
 export default class SendTracksQueueSize implements Action {
@@ -19,9 +17,7 @@ export default class SendTracksQueueSize implements Action {
         .catch(logger.error.bind(logger));
     }
 
-    const postfix = getPluralForm(tracks.length, ['трек', 'трека', 'треков']);
-
-    await twitch.sendMessage(`Размер очереди: ${tracks.length} ${postfix}.`)
+    await twitch.sendMessage(`Количество треков в очереди: ${tracks.length}.`)
       .catch(logger.error.bind(logger));
   }
 }
