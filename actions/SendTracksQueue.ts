@@ -10,7 +10,7 @@ export default class SendTracksQueue implements Action {
   }
 
   public async run(_args: unknown, { twitch, music, logger }: Context) {
-    const tracks = music.queuedTracks;
+    const tracks = music.queuedTracks.slice(0, 10);
 
     if (!tracks.length) {
       return await twitch.sendMessage('Очередь пуста.')
