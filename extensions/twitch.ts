@@ -5,7 +5,8 @@ const MAX_MESSAGE_LENGTH = 500;
 const MAX_TIMEOUT_SECONDS = 14 * 24 * 60 * 60;
 const TWITCH_LOGIN_PATTERN = /^[a-z0-9_]{1,25}$/;
 
-type Client = Pick<StreamerbotClient, 'sendMessage' | 'doAction'>;
+type Client = Pick<StreamerbotClient, 'sendMessage' | 'doAction'> &
+  Partial<Pick<StreamerbotClient, 'send'>>;
 
 const chatText = (value: string) => {
   const text = value.replace(/[\r\n]+/g, ' ').trim();
@@ -55,8 +56,27 @@ export default class Twitch {
   }
 
   public async sendMessage(message: string) {
+    const text = chatText(message);
+
+    // A command trigger is executed by Streamer.bot's action queue. Waiting for
+    // the response to SendMessage from inside that trigger can deadlock: the
+    // queue waits for this handler while the response waits for the queue.
+    // Send the request without awaiting its response so the command action can
+    // finish and Streamer.bot can deliver the chat message immediately after.
+    if (this.client.send) {
+      this.client.send({
+        request: 'SendMessage',
+        id: crypto.randomUUID(),
+        platform: 'twitch',
+        message: text,
+        bot: this.config.useBot,
+        internal: false,
+      });
+      return;
+    }
+
     await this.ensureSuccess(
-      this.client.sendMessage('twitch', chatText(message), {
+      this.client.sendMessage('twitch', text, {
         bot: this.config.useBot,
         internal: false,
       }),
@@ -89,14 +109,18 @@ export default class Twitch {
     );
   }
 
-  public async updateRedemptionStatus(redemptionId: string, rewardId: string, status: 'CANCELED' | 'FULFILLED') {
+  public async updateRedemptionStatus(
+    redemptionId: string,
+    rewardId: string,
+    status: 'CANCELED' | 'FULFILLED',
+  ) {
     await this.ensureSuccess(
       this.client.doAction(
         { name: 'UpdateRedemptionStatus' },
         {
           redemptionId,
           rewardId,
-          status
+          status,
         },
       ),
     );
