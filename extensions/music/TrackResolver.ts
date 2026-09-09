@@ -54,6 +54,7 @@ export default class TrackResolver {
         );
       }
       return {
+        source: 'yandex' as const,
         provider: new Yandex(this.config.music),
         url: `https://${url.hostname}/album/${track[1]}/track/${track[2]}`,
       };
@@ -64,17 +65,41 @@ export default class TrackResolver {
         url.hostname,
       )
     ) {
-      return { provider: new YouTube(this.config.music), url: youtubeUrl(input) };
+      return {
+        source: 'youtube' as const,
+        provider: new YouTube(this.config.music),
+        url: youtubeUrl(input)
+      };
     }
     throw new Error('Поддерживаются только видео YouTube и треки Яндекс Музыки.');
   }
 
   public async fromProps({url: input, userName, rewardId, redemptionId}: TrackProps) {
-    const { provider, url: parsedUrl } = this.getProvider(input);
+    const { source, provider, url: parsedUrl } = this.getProvider(input);
     const controller = new AbortController();
 
     const { title, url } = await provider.resolve(parsedUrl, controller.signal);
 
-    return new Track(url, title, userName, rewardId, redemptionId);
+    return new Track(url, title, userName, rewardId, redemptionId, source);
+  }
+
+  public async likeTrack(track: Track) {
+    if (track.source !== 'yandex') {
+      throw 'Track source is not yandex';
+    }
+
+    const provider = new Yandex(this.config.music);
+
+    await provider.likeTrack(track.url);
+  }
+
+  public async dislikeTrack(track: Track) {
+    if (track.source !== 'yandex') {
+      throw 'Track source is not yandex';
+    }
+
+    const provider = new Yandex(this.config.music);
+
+    await provider.dislikeTrack(track.url);
   }
 }

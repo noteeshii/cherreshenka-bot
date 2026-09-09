@@ -12,6 +12,8 @@ import {
   SkipCurrentTrack,
   AddTrackToQueue,
   RemoveTrackFromQueue,
+  LikeCurrentTrack,
+  DislikeCurrentTrack
 } from '#actions';
 
 type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
@@ -49,7 +51,9 @@ export class Bot {
       new SetTracksVolume(),
       new SkipCurrentTrack(),
       new AddTrackToQueue(this.config),
-      new RemoveTrackFromQueue()
+      new RemoveTrackFromQueue(),
+      new LikeCurrentTrack(),
+      new DislikeCurrentTrack()
     ];
   }
 

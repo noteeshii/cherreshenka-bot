@@ -37,17 +37,28 @@ function serviceUrl(value: string): URL {
 export default class YandexMusicClient implements Provider {
   private readonly token: string;
   private readonly request: typeof fetch;
+  private accountId: string | undefined;
 
   constructor(config: Config['music'], request: typeof fetch = fetch) {
     this.request = request;
     this.token = config.yandexMusicToken;
   }
 
-  async resolve(input: string, signal: AbortSignal): Promise<RawTrack> {
+  public async resolve(input: string, signal: AbortSignal): Promise<RawTrack> {
     const track = await this.getMetadata(input, signal);
     const format = await this.getAudioFormat(track.id, signal);
     const audioUrl = await this.getAudioUrl(format, signal);
     return { title: track.title, url: audioUrl };
+  }
+
+  /** Add a track to the account's "Liked tracks" collection. */
+  public async likeTrack(input: string, signal = new AbortController().signal): Promise<void> {
+    await this.setTrackPreference('likes', input, signal);
+  }
+
+  /** Mark a track as "Do not recommend" for the account. */
+  public async dislikeTrack(input: string, signal = new AbortController().signal): Promise<void> {
+    await this.setTrackPreference('dislikes', input, signal);
   }
 
   private async requestJson(
@@ -99,6 +110,53 @@ export default class YandexMusicClient implements Provider {
     if (data.error)
       throw new Error('Яндекс Музыка отклонила запрос. Проверьте токен и доступ к треку.');
     return data.result;
+  }
+
+  private async setTrackPreference(
+    preference: 'likes' | 'dislikes',
+    input: string,
+    signal: AbortSignal,
+  ): Promise<void> {
+    if (!this.token) {
+      throw new Error('Яндекс Музыка: для оценки трека задайте YANDEX_MUSIC_TOKEN.');
+    }
+
+    const accountId = await this.getAccountId(signal);
+    const trackId = this.getTrackId(input);
+    await this.requestApi(
+      `/users/${encodeURIComponent(accountId)}/${preference}/tracks/add-multiple`,
+      signal,
+      new URLSearchParams({ 'track-ids': trackId }),
+    );
+  }
+
+  private async getAccountId(signal: AbortSignal): Promise<string> {
+    if (this.accountId) return this.accountId;
+
+    const result = object(await this.requestApi('/account/status', signal));
+    const account = object(result.account);
+    if (typeof account.uid !== 'number' && typeof account.uid !== 'string') {
+      throw new Error('Яндекс Музыка: не удалось получить ID аккаунта из токена.');
+    }
+
+    this.accountId = String(account.uid);
+    return this.accountId;
+  }
+
+  private getTrackId(input: string): string {
+    if (/^\d+$/.test(input.trim())) return input.trim();
+
+    let url: URL;
+    try {
+      url = new URL(input);
+    } catch {
+      throw new Error('Яндекс Музыка: укажите ID или ссылку на трек.');
+    }
+    const match = /^\/album\/\d+\/track\/(\d+)\/?$/.exec(url.pathname);
+    if (!match || !/^music\.yandex\.(ru|com|kz|by|ua)$/.test(url.hostname)) {
+      throw new Error('Яндекс Музыка: укажите ссылку на трек или его числовой ID.');
+    }
+    return match[1];
   }
 
   private parseTrackId(url: string) {

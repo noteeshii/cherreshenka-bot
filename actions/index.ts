@@ -7,4 +7,6 @@ export { default as SkipCurrentTrack } from './SkipCurrentTrack.ts';
 export { default as SetTracksVolume } from './SetTracksVolume.ts';
 export { default as AddTrackToQueue } from './AddTrackToQueue.ts';
 export { default as RemoveTrackFromQueue } from './RemoveTrackFromQueue.ts';
+export { default as LikeCurrentTrack } from './LikeCurrentTrack.ts';
+export { default as DislikeCurrentTrack } from './DislikeCurrentTrack.ts';
 export type { Action } from './types.ts';

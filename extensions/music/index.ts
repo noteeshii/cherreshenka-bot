@@ -7,7 +7,7 @@ import AudioPlayer from './Player.ts';
 export default class Music {
   private readonly config: Config;
   private readonly logger: Logger;
-  current: Track | undefined;
+  public current: Track | undefined;
   private waiting: Track[] = [];
   private loading: { url: string; title?: string } | undefined;
   private titleWorker: Promise<void> | undefined;
@@ -41,19 +41,39 @@ export default class Music {
     this.startWorker();
   }
 
-  pause(): Promise<void> {
+  public pause(): Promise<void> {
     return this.player.setPaused(true);
   }
 
-  resume(): Promise<void> {
+  public resume(): Promise<void> {
     return this.player.setPaused(false);
   }
 
-  setVolume(volume: number): Promise<void> {
+  public setVolume(volume: number): Promise<void> {
     return this.player.setVolume(volume);
   }
 
-  skip() {
+  public async likeCurrent() {
+    const track = this.current;
+
+    if (!track) {
+      throw 'Track is not exists';
+    }
+
+    await this.resolver.likeTrack(track);
+  }
+
+  public async dislikeCurrent() {
+    const track = this.current;
+
+    if (!track) {
+      throw 'Track is not exists';
+    }
+
+    await this.resolver.dislikeTrack(track);
+  }
+
+  public skip() {
     const track = this.current;
 
     this.active?.abort();
@@ -61,7 +81,7 @@ export default class Music {
     return track;
   }
 
-  cancel(userName: string, idx: number) {
+  public cancel(userName: string, idx: number) {
     const track = this.waiting.at(idx);
 
     if (!track) {
@@ -76,7 +96,7 @@ export default class Music {
     return track;
   }
 
-  async close(): Promise<void> {
+  public async close(): Promise<void> {
     this.closed = true;
     this.waiting = [];
     this.active?.abort();
