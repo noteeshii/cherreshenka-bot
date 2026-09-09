@@ -33,6 +33,7 @@ export default class RemoveTrackFromQueue implements Action {
     }
 
     await twitch.updateRedemptionStatus(track.redemptionId, track.rewardId, 'CANCELED');
+    await twitch.sendMessage(`Трек "${track.title}" отменен, баллы возвращены.`);
   }
 }
 
