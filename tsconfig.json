@@ -19,7 +19,17 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    "paths": {
+      "#actions": ["./actions/index.ts"],
+      "#actions/*.ts": ["./actions/*.ts"],
+      "#actions/*": ["./actions/*.ts"],
+      "#extensions": ["./extensions/index.ts"],
+      "#extensions/*.ts": ["./extensions/*.ts"],
+      "#extensions/*": ["./extensions/*.ts"],
+      "#utils": ["./utils/index.ts"]
+    }
   },
   "include": ["*.ts", "actions", "extensions", "test", "scripts"]
 }

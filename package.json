@@ -30,6 +30,7 @@
     "#actions/*": "./actions/*.ts",
     "#extensions": "./extensions/index.ts",
     "#extensions/*.ts": "./extensions/*.ts",
-    "#extensions/*": "./extensions/*.ts"
+    "#extensions/*": "./extensions/*.ts",
+    "#utils": "./utils/index.ts"
   }
 }
