@@ -9,13 +9,25 @@ export default class RemoveTrackFromQueue implements Action {
     return input === this.name;
   }
 
-  public async run({message, user}: CommandEvent, { music, twitch }: Context) {
+  public async run({message, user}: CommandEvent, { music, twitch, logger }: Context) {
     if (!/^(?:[1-9][0-9]?|100)$/.test(message.trim())) {
-      return await twitch.sendMessage('Использование: !отмена <номер трека из очереди> (целое число >= 1).');
+      await twitch.sendMessage('Использование: !отмена <номер трека из очереди> (целое число >= 1).');
+      return;
     }
 
-    const track = music.cancel(user.name, Number(message.trim()) - 1);
+    let track;
 
+    try {
+      track = music.cancel(user.name, Number(message.trim()) - 1);
+    } catch (err) {
+      if (err === 'permission denied') {
+        await twitch.sendMessage('Ты пытаешься отменить чужой трек.');
+      } else {
+        logger.error(String(err));
+      }
+
+      return;
+    }      
     if (!track) {
       return;
     }

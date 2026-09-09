@@ -64,7 +64,7 @@ export class Bot {
       return;
     }
 
-    await action.run(payload, { twitch: this.twitch, music: this.music, logger: this.logger });
+    await action.run(payload, { twitch: this.twitch, music: this.music, logger: commandLogger });
 
     commandLogger.debug(`Completed: ${payload.name}`);
   }
@@ -88,7 +88,7 @@ export class Bot {
       return;
     }
 
-    await action.run(reward, { twitch: this.twitch, music: this.music, logger: this.logger });
+    await action.run(reward, { twitch: this.twitch, music: this.music, logger: rewardLogger });
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
   }

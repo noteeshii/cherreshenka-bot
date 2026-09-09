@@ -62,7 +62,14 @@ export default class Music {
   }
 
   cancel(userName: string, idx: number) {
-    const track = this.waiting.find((track, jdx) => track.userName === userName && (idx) === jdx);
+    const track = this.waiting.at(idx);
+
+    if (!track) {
+      return;
+    }
+    if (track.userName !== userName) {
+      throw 'permission denied';
+    }
 
     this.waiting = this.waiting.toSpliced(idx, 1);
 
@@ -71,9 +78,10 @@ export default class Music {
 
   async close(): Promise<void> {
     this.closed = true;
-    this.waiting.length = 0;
+    this.waiting = [];
     this.active?.abort();
     this.titleAbort.abort();
+
     await this.titleWorker;
     await this.worker;
     await this.player.close();
@@ -92,10 +100,13 @@ export default class Music {
     while (!this.closed && this.waiting.length > 0) {
       const entry = this.waiting.shift()!;
       const controller = new AbortController();
+
       this.active = controller;
+
       try {
         this.loading = undefined;
         this.current = entry;
+
         await this.player.play(entry, controller.signal);
       } catch (error) {
         if (!controller.signal.aborted) this.logger.error(String(error));
