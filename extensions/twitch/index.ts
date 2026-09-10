@@ -103,14 +103,12 @@ export default class Twitch {
     );
   }
 
-  public async timeout(username: string, duration: number, reason?: string) {
+  public async timeout(userName: string) {
     await this.ensureSuccess(
       this.client.doAction(
-        { name: this.config.action },
+        { name: 'TimeoutUser' },
         {
-          operation: 'timeout',
-          ...timeoutArgs(username, duration, reason),
-          bot: this.config.useBot,
+          userName
         },
       ),
     );
@@ -134,13 +132,10 @@ export default class Twitch {
   }
 
   public async getUser(userName: string) {
-    const { args, customEventResponseArgs } = await this.ensureSuccess<{
+    const { customEventResponseArgs } = await this.ensureSuccess<{
       customEventResponseArgs?: Record<string, unknown>;
-      args?: Record<string, unknown>;
     }>(this.client.doAction({ name: 'GetUserInfo' }, { userName }, { customEventResponse: true }));
 
-    console.log('Args:', JSON.stringify(args, undefined, 2));
-    console.log('Custom:', JSON.stringify(customEventResponseArgs, undefined, 2));
     if (!customEventResponseArgs) {
       throw new Error('Custom event response is not exists');
     }
@@ -151,6 +146,7 @@ export default class Twitch {
       'targetIsModerator',
       'targetIsSubscribed',
       'targetIsVip',
+      'targetIsFollowing'
     ] as const;
 
     const props = {} as UserProps;
@@ -176,6 +172,9 @@ export default class Twitch {
       }
       if (field === 'targetIsVip') {
         props.isVip = Boolean(value);
+      }
+      if (field === 'targetIsFollowing') {
+        props.isFollowing = Boolean(value);
       }
     }
 
