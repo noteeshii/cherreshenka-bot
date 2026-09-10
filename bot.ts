@@ -13,7 +13,7 @@ import {
   AddTrackToQueue,
   RemoveTrackFromQueue,
   LikeCurrentTrack,
-  DislikeCurrentTrack
+  DislikeCurrentTrack,
 } from '#actions';
 
 type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
@@ -53,7 +53,7 @@ export class Bot {
       new AddTrackToQueue(this.config),
       new RemoveTrackFromQueue(),
       new LikeCurrentTrack(),
-      new DislikeCurrentTrack()
+      new DislikeCurrentTrack(),
     ];
   }
 

@@ -13,8 +13,7 @@ export default class SendTracksQueue implements Action {
     const tracks = music.queuedTracks.slice(0, 10);
 
     if (!tracks.length) {
-      return await twitch.sendMessage('Очередь пуста.')
-        .catch(logger.error.bind(logger));
+      return await twitch.sendMessage('Очередь пуста.').catch(logger.error.bind(logger));
     }
     const messages: string[] = [];
 
@@ -25,7 +24,6 @@ export default class SendTracksQueue implements Action {
       messages.push(entry);
     }
 
-    await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`)
-      .catch(logger.error.bind(logger));
+    await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`).catch(logger.error.bind(logger));
   }
 }

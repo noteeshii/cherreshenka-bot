@@ -12,7 +12,7 @@ export default class LikeCurrentTrack implements Action {
   public async run(_args: unknown, { music, twitch, logger }: Context) {
     try {
       await music.likeCurrent();
-    } catch(err) {
+    } catch (err) {
       if (err === 'Track is not exists') {
         await twitch.sendMessage('Сейчас ничего не играет.');
         return;

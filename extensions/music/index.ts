@@ -1,6 +1,6 @@
 import type { Config, Logger } from '#extensions';
 
-import Track, {type TrackProps} from './Track.ts';
+import Track, { type TrackProps } from './Track.ts';
 import TrackResolver from './TrackResolver.ts';
 import AudioPlayer from './Player.ts';
 

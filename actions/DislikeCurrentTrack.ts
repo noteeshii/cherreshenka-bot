@@ -12,7 +12,7 @@ export default class DislikeCurrentTrack implements Action {
   public async run(_args: unknown, { music, twitch, logger }: Context) {
     try {
       await music.dislikeCurrent();
-    } catch(err) {
+    } catch (err) {
       if (err === 'Track is not exists') {
         await twitch.sendMessage('Сейчас ничего не играет.');
         return;

@@ -5,6 +5,7 @@ export default class Track {
   public readonly rewardId: string;
   public readonly redemptionId: string;
   public readonly source: 'youtube' | 'yandex';
+  public readonly rawUrl: string;
 
   constructor(
     url: string,
@@ -12,7 +13,8 @@ export default class Track {
     userName: string,
     rewardId: string,
     redemptionId: string,
-    source: 'yandex' | 'youtube'
+    source: 'yandex' | 'youtube',
+    rawUrl: string,
   ) {
     this.url = url;
     this.title = title;
@@ -20,6 +22,7 @@ export default class Track {
     this.rewardId = rewardId;
     this.redemptionId = redemptionId;
     this.source = source;
+    this.rawUrl = rawUrl;
   }
 }
 

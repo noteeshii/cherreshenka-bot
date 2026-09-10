@@ -1,6 +1,5 @@
 import type { StreamerbotEventData } from '@streamerbot/client';
 
-
 import type { Config } from '#extensions';
 import type { Context, Action } from './types.ts';
 
@@ -23,15 +22,11 @@ export default class AddTrackToQueue implements Action {
         url: reward.user_input,
         userName: reward.user_login,
         rewardId: reward.reward.id,
-        redemptionId: reward.id
+        redemptionId: reward.id,
       });
     } catch (error) {
       await twitch.sendMessage(`@${reward.user_login}, Не удалось добавить трек.`);
-      await twitch.updateRedemptionStatus(
-        reward.id,
-        reward.reward.id,
-        'CANCELED'
-      );
+      await twitch.updateRedemptionStatus(reward.id, reward.reward.id, 'CANCELED');
     }
   }
 }

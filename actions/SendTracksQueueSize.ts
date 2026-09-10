@@ -13,11 +13,11 @@ export default class SendTracksQueueSize implements Action {
     const tracks = music.queuedTracks;
 
     if (!tracks.length) {
-      return await twitch.sendMessage('Очередь пуста.')
-        .catch(logger.error.bind(logger));
+      return await twitch.sendMessage('Очередь пуста.').catch(logger.error.bind(logger));
     }
 
-    await twitch.sendMessage(`Количество треков в очереди: ${tracks.length}.`)
+    await twitch
+      .sendMessage(`Количество треков в очереди: ${tracks.length}.`)
       .catch(logger.error.bind(logger));
   }
 }

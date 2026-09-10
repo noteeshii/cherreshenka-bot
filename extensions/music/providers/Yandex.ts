@@ -154,7 +154,7 @@ export default class YandexMusicClient implements Provider {
     }
     const match = /^\/album\/\d+\/track\/(\d+)\/?$/.exec(url.pathname);
     if (!match || !/^music\.yandex\.(ru|com|kz|by|ua)$/.test(url.hostname)) {
-      throw new Error('Яндекс Музыка: укажите ссылку на трек или его числовой ID.');
+      throw new Error(`Яндекс Музыка: укажите ссылку на трек или его числовой ID. ${input}`);
     }
     return match[1];
   }

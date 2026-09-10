@@ -9,9 +9,11 @@ export default class RemoveTrackFromQueue implements Action {
     return input === this.name;
   }
 
-  public async run({message, user}: CommandEvent, { music, twitch, logger }: Context) {
+  public async run({ message, user }: CommandEvent, { music, twitch, logger }: Context) {
     if (!/^(?:[1-9][0-9]?|100)$/.test(message.trim())) {
-      await twitch.sendMessage('Использование: !отмена <номер трека из очереди> (целое число >= 1).');
+      await twitch.sendMessage(
+        'Использование: !отмена <номер трека из очереди> (целое число >= 1).',
+      );
       return;
     }
 
@@ -27,7 +29,7 @@ export default class RemoveTrackFromQueue implements Action {
       }
 
       return;
-    }      
+    }
     if (!track) {
       return;
     }

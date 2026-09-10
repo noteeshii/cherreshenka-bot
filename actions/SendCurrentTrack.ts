@@ -10,9 +10,10 @@ export default class SendCurrentTrack implements Action {
   }
 
   public async run(_args: unknown, { twitch, music, logger }: Context) {
-    await twitch.sendMessage(
-      music.current ? `Сейчас играет: ${music.current.title}` : 'Сейчас ничего не играет.',
-    )
+    await twitch
+      .sendMessage(
+        music.current ? `Сейчас играет: ${music.current.title}` : 'Сейчас ничего не играет.',
+      )
       .catch(logger.error.bind(logger));
   }
 }

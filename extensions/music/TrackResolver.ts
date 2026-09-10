@@ -1,8 +1,7 @@
 import type { Config } from '#extensions';
 
 import { Yandex, YouTube } from './providers/index.ts';
-import Track, {type TrackProps} from './Track.ts';
-
+import Track, { type TrackProps } from './Track.ts';
 
 const youtubeUrl = (input: string) => {
   let url: URL;
@@ -68,19 +67,19 @@ export default class TrackResolver {
       return {
         source: 'youtube' as const,
         provider: new YouTube(this.config.music),
-        url: youtubeUrl(input)
+        url: youtubeUrl(input),
       };
     }
     throw new Error('Поддерживаются только видео YouTube и треки Яндекс Музыки.');
   }
 
-  public async fromProps({url: input, userName, rewardId, redemptionId}: TrackProps) {
+  public async fromProps({ url: input, userName, rewardId, redemptionId }: TrackProps) {
     const { source, provider, url: parsedUrl } = this.getProvider(input);
     const controller = new AbortController();
 
     const { title, url } = await provider.resolve(parsedUrl, controller.signal);
 
-    return new Track(url, title, userName, rewardId, redemptionId, source);
+    return new Track(url, title, userName, rewardId, redemptionId, source, parsedUrl);
   }
 
   public async likeTrack(track: Track) {
@@ -90,7 +89,7 @@ export default class TrackResolver {
 
     const provider = new Yandex(this.config.music);
 
-    await provider.likeTrack(track.url);
+    await provider.likeTrack(track.rawUrl);
   }
 
   public async dislikeTrack(track: Track) {
@@ -100,6 +99,6 @@ export default class TrackResolver {
 
     const provider = new Yandex(this.config.music);
 
-    await provider.dislikeTrack(track.url);
+    await provider.dislikeTrack(track.rawUrl);
   }
 }

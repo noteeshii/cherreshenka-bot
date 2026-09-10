@@ -1,1 +1,1 @@
-export {default as getPluralForm} from './getPluralForm';
+export { default as getPluralForm } from './getPluralForm';
