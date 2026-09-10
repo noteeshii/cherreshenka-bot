@@ -20,11 +20,14 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
       timeout: async (...args: unknown[]) => {
         calls.push(['timeout', ...args]);
       },
+      updateRedemptionStatus: async (...args: unknown[]) => {
+        calls.push(['redemption-status', ...args]);
+      },
     } as any,
     testConfig(),
     {
       queuedTracks,
-      current: new Track('', 'Test song'),
+      current: new Track('', 'Test song', '', '', '', 'youtube', ''),
       enqueue: async (input: string) => {
         if (enqueueError) throw enqueueError;
         calls.push(['enqueue', input]);
@@ -42,7 +45,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
         calls.push(['skip']);
       },
     } as any,
-    new Logger({level: ''}),
+    new Logger({ level: '' }),
   );
   return { bot, calls };
 }
@@ -50,7 +53,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
 function command(name: string, message = '') {
   return {
     name,
-    message
+    message,
   } as any;
 }
 
@@ -86,6 +89,31 @@ test('транспорт передаёт реальные запросы API и
   ]);
   client.sendMessage = async () => ({ status: 'error' }) as never;
   await assert.rejects(twitch.sendMessage('hi'));
+});
+
+test('сообщение команды отправляется без ожидания ответа Streamer.bot', async () => {
+  const requests: Record<string, unknown>[] = [];
+  const client = {
+    send: (request: Record<string, unknown>) => requests.push(request),
+    sendMessage: async () => ({ status: 'ok' }),
+    doAction: async () => ({ status: 'ok' }),
+  } as unknown as Pick<StreamerbotClient, 'sendMessage' | 'doAction' | 'send'>;
+  const twitch = new Twitch({ useBot: true, action: 'Dispatch' }, client);
+
+  await twitch.sendMessage('Очередь пуста.');
+
+  assert.equal(requests.length, 1);
+  assert.deepEqual(
+    { ...requests[0], id: typeof requests[0].id },
+    {
+      request: 'SendMessage',
+      id: 'string',
+      platform: 'twitch',
+      message: 'Очередь пуста.',
+      bot: true,
+      internal: false,
+    },
+  );
 });
 
 test('настройки читаются из изолированного окружения', (t) => {
@@ -130,5 +158,8 @@ test('ошибка асинхронного заказа возвращаетс�
     user_login: 'viewer',
     reward: { id: 'reward', title: 'Музыка' },
   } as StreamerbotEventData<'Twitch.RewardRedemption'>);
-  assert.deepEqual(calls, [['message', '@viewer, Не удалось добавить трек.']]);
+  assert.deepEqual(calls, [
+    ['message', '@viewer, Не удалось добавить трек.'],
+    ['redemption-status', 'failed-order', 'reward', 'CANCELED'],
+  ]);
 });

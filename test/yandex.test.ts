@@ -131,3 +131,59 @@ test('некорректные timestamp не принимаются как ча
     );
   }
 });
+
+test('лайк и дизлайк используют аккаунт токена и ID трека из ссылки', async () => {
+  const { request, calls } = mock([
+    { result: { account: { uid: 42 } } },
+    { result: { revision: 1 } },
+    { result: { revision: 2 } },
+  ]);
+  const client = new YandexMusicClient(
+    { ...testConfig().music, yandexMusicToken: 'test-token' },
+    request,
+  );
+
+  await client.likeTrack(url);
+  await client.dislikeTrack('44252390');
+
+  assert.deepEqual(
+    calls.map(({ url: requestUrl, init }) => ({
+      url: requestUrl,
+      method: init?.method,
+      body: String(init?.body),
+      authorization: new Headers(init?.headers).get('Authorization'),
+    })),
+    [
+      {
+        url: 'https://api.music.yandex.net/account/status',
+        method: 'GET',
+        body: 'undefined',
+        authorization: 'OAuth test-token',
+      },
+      {
+        url: 'https://api.music.yandex.net/users/42/likes/tracks/add-multiple',
+        method: 'POST',
+        body: 'track-ids=44252390',
+        authorization: 'OAuth test-token',
+      },
+      {
+        url: 'https://api.music.yandex.net/users/42/dislikes/tracks/add-multiple',
+        method: 'POST',
+        body: 'track-ids=44252390',
+        authorization: 'OAuth test-token',
+      },
+    ],
+  );
+});
+
+test('оценка трека требует токен и корректный ID', async () => {
+  const client = new YandexMusicClient({ ...testConfig().music, yandexMusicToken: '' });
+  await assert.rejects(client.likeTrack(url), /YANDEX_MUSIC_TOKEN/);
+
+  const { request } = mock([{ result: { account: { uid: 42 } } }]);
+  const authenticated = new YandexMusicClient(
+    { ...testConfig().music, yandexMusicToken: 'test-token' },
+    request,
+  );
+  await assert.rejects(authenticated.dislikeTrack('not-a-track'), /ID или ссылку/);
+});

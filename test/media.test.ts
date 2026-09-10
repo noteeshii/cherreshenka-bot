@@ -8,6 +8,12 @@ import { testConfig } from './fixtures.ts';
 
 const yandex = 'https://music.yandex.ru/album/540508/track/4878838';
 const youtube = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+const props = (url: string) => ({
+  url,
+  userName: 'viewer',
+  rewardId: 'reward',
+  redemptionId: 'redemption',
+});
 
 test('TrackResolver нормализует ссылки и выбирает провайдера', async (t) => {
   const resolver = new TrackResolver(testConfig());
@@ -21,7 +27,7 @@ test('TrackResolver нормализует ссылки и выбирает пр
   }));
   for (const domain of ['ru', 'com', 'kz', 'by', 'ua']) {
     const url = yandex.replace('.ru', `.${domain}`);
-    const track = await resolver.fromUrl(url + '/?utm_source=share#track');
+    const track = await resolver.fromProps(props(url + '/?utm_source=share#track'));
     assert.ok(track instanceof Track);
     assert.equal(track.url, url);
     assert.equal(track.title, 'Song');
@@ -33,9 +39,15 @@ test('TrackResolver нормализует ссылки и выбирает пр
     youtube + '&list=PL123',
     'https://www.youtube.com/shorts/dQw4w9WgXcQ',
   ]) {
-    assert.equal((await resolver.fromUrl(url)).url, youtube);
+    assert.equal((await resolver.fromProps(props(url))).url, youtube);
   }
   assert.equal(youtubeMock.mock.callCount(), 3);
+
+  const shortYandex = await resolver.fromProps(
+    props('https://music.yandex.ru/track/132197042?utm_source=desktop&utm_medium=copy_link'),
+  );
+  assert.equal(shortYandex.url, 'https://music.yandex.ru/track/132197042');
+  assert.equal(yandexMock.mock.callCount(), 6);
 });
 
 test('альбомы, плейлисты и посторонние адреса отклоняются до обращения к провайдерам', async (t) => {
@@ -58,7 +70,7 @@ test('альбомы, плейлисты и посторонние адреса 
     'https://user:pass@youtube.com/watch?v=dQw4w9WgXcQ',
     'hello',
   ])
-    await assert.rejects(resolver.fromUrl(url));
+    await assert.rejects(resolver.fromProps(props(url)));
   assert.equal(yt.mock.callCount(), 0);
   assert.equal(ya.mock.callCount(), 0);
 });
