@@ -40,8 +40,8 @@ export default class SendTracksQueue implements Action {
       messages.push(entry);
     }
 
-    await twitch.sendMessage(
-      `${prefix}${messages.join(separator)}`
-    ).catch(logger.error.bind(logger));
+    await twitch
+      .sendMessage(`${prefix}${messages.join(separator)}`)
+      .catch(logger.error.bind(logger));
   }
 }

@@ -6,7 +6,12 @@ async function main(): Promise<void> {
   if (!input || process.argv.length !== 3) {
     throw new Error('Использование: npm run diagnose:music -- "ссылка на трек"');
   }
-  const track = await new TrackResolver(Config.fromEnv()).fromProps({url: input, userName: 'userName', rewardId: 'rewardId', redemptionId: 'redemptionId'});
+  const track = await new TrackResolver(Config.fromEnv()).fromProps({
+    url: input,
+    userName: 'userName',
+    rewardId: 'rewardId',
+    redemptionId: 'redemptionId',
+  });
   console.info('Аудиоссылка получена:', track.title);
 }
 

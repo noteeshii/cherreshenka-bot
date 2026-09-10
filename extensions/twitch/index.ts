@@ -2,7 +2,7 @@ import type { StreamerbotClient } from '@streamerbot/client';
 
 import type { Config } from '#extensions';
 
-import User, {type Props as UserProps} from './User.ts';
+import User, { type Props as UserProps } from './User.ts';
 
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_TIMEOUT_SECONDS = 14 * 24 * 60 * 60;
@@ -44,7 +44,9 @@ export default class Twitch {
     this.client = client;
   }
 
-  private async ensureSuccess<Response>(request: Promise<{status: string; error?: string} & Response>) {
+  private async ensureSuccess<Response>(
+    request: Promise<{ status: string; error?: string } & Response>,
+  ) {
     const response = await request;
 
     if (response.status !== 'ok') {
@@ -132,13 +134,9 @@ export default class Twitch {
   }
 
   public async getUser(userName: string) {
-    const {customEventResponseArgs} = await this.ensureSuccess<{customEventResponseArgs?: Record<string, unknown>}>(
-      this.client.doAction(
-        {name: 'GetUserInfo'},
-        {userName},
-        {customEventResponse: true}
-      )
-    );
+    const { customEventResponseArgs } = await this.ensureSuccess<{
+      customEventResponseArgs?: Record<string, unknown>;
+    }>(this.client.doAction({ name: 'GetUserInfo' }, { userName }, { customEventResponse: true }));
 
     if (!customEventResponseArgs) {
       throw new Error('Custom event response is not exists');
@@ -149,7 +147,7 @@ export default class Twitch {
       'targetUserName',
       'targetIsModerator',
       'targetIsSubscribed',
-      'targetIsVip'
+      'targetIsVip',
     ] as const;
 
     const props = {} as UserProps;

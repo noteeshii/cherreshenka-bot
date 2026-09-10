@@ -1,4 +1,3 @@
-
 export default class User {
   public readonly id: string;
   public readonly name: string;
@@ -11,7 +10,7 @@ export default class User {
     name: string,
     isModerator: boolean,
     isSubscribed: boolean,
-    isVip: boolean
+    isVip: boolean,
   ) {
     this.id = id;
     this.name = name;
@@ -21,13 +20,7 @@ export default class User {
   }
 
   static fromProps(props: Props) {
-    return new User(
-      props.id,
-      props.name,
-      props.isModerator,
-      props.isSubscribed,
-      props.isVip
-    );
+    return new User(props.id, props.name, props.isModerator, props.isSubscribed, props.isVip);
   }
 }
 
@@ -38,4 +31,3 @@ export type Props = {
   isSubscribed: boolean;
   isVip: boolean;
 };
-
