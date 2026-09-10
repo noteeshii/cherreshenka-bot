@@ -12,7 +12,7 @@ export default class User {
     isModerator: boolean,
     isSubscribed: boolean,
     isVip: boolean,
-    isFollowing: boolean
+    isFollowing: boolean,
   ) {
     this.id = id;
     this.name = name;
@@ -29,7 +29,7 @@ export default class User {
       props.isModerator,
       props.isSubscribed,
       props.isVip,
-      props.isFollowing
+      props.isFollowing,
     );
   }
 }

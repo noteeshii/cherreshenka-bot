@@ -64,6 +64,6 @@ const shutdown = () => {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-await client.connect().catch(logger.error.bind(logger)).then(async() => {
-  await twitch.timeout('zigimzigi');
-});
+await client
+  .connect()
+  .catch(logger.error.bind(logger));

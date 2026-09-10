@@ -5,8 +5,6 @@ import type { Config } from '#extensions';
 import User, { type Props as UserProps } from './User.ts';
 
 const MAX_MESSAGE_LENGTH = 500;
-const MAX_TIMEOUT_SECONDS = 14 * 24 * 60 * 60;
-const TWITCH_LOGIN_PATTERN = /^[a-z0-9_]{1,25}$/;
 
 type Client = Pick<StreamerbotClient, 'sendMessage' | 'doAction'> &
   Partial<Pick<StreamerbotClient, 'send'>>;
@@ -18,22 +16,6 @@ const chatText = (value: string) => {
   }
 
   return text;
-};
-
-const timeoutArgs = (username: string, duration: number, reason = '') => {
-  const login = username.replace(/^@/, '').toLowerCase();
-
-  if (!TWITCH_LOGIN_PATTERN.test(login)) {
-    throw new Error('Некорректный Twitch login');
-  }
-  if (!Number.isInteger(duration) || duration < 1 || duration > MAX_TIMEOUT_SECONDS) {
-    throw new Error('Таймаут: целое число от 1 до 1209600 секунд');
-  }
-  if ([...reason].length > MAX_MESSAGE_LENGTH) {
-    throw new Error('Причина длиннее 500 символов');
-  }
-
-  return { username: login, duration, reason };
 };
 
 export default class Twitch {
@@ -103,12 +85,12 @@ export default class Twitch {
     );
   }
 
-  public async timeout(userName: string) {
+  public async timeoutUser(userName: string) {
     await this.ensureSuccess(
       this.client.doAction(
         { name: 'TimeoutUser' },
         {
-          userName
+          userName,
         },
       ),
     );
@@ -146,7 +128,7 @@ export default class Twitch {
       'targetIsModerator',
       'targetIsSubscribed',
       'targetIsVip',
-      'targetIsFollowing'
+      'targetIsFollowing',
     ] as const;
 
     const props = {} as UserProps;
