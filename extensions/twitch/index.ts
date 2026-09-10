@@ -1,5 +1,8 @@
 import type { StreamerbotClient } from '@streamerbot/client';
+
 import type { Config } from '#extensions';
+
+import User, {type Props as UserProps} from './User.ts';
 
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_TIMEOUT_SECONDS = 14 * 24 * 60 * 60;
@@ -41,7 +44,7 @@ export default class Twitch {
     this.client = client;
   }
 
-  private async ensureSuccess(request: Promise<{ status: string; error?: string }>) {
+  private async ensureSuccess<Response>(request: Promise<{status: string; error?: string} & Response>) {
     const response = await request;
 
     if (response.status !== 'ok') {
@@ -53,6 +56,8 @@ export default class Twitch {
 
       throw new Error(`Streamer.bot отклонил запрос: ${response.error || 'причина не указана'}`);
     }
+
+    return response;
   }
 
   public async sendMessage(message: string) {
@@ -124,5 +129,55 @@ export default class Twitch {
         },
       ),
     );
+  }
+
+  public async getUser(userName: string) {
+    const {customEventResponseArgs} = await this.ensureSuccess<{customEventResponseArgs?: Record<string, unknown>}>(
+      this.client.doAction(
+        {name: 'GetUserInfo'},
+        {userName},
+        {customEventResponse: true}
+      )
+    );
+
+    if (!customEventResponseArgs) {
+      throw new Error('Custom event response is not exists');
+    }
+
+    const needFields = [
+      'targetUserId',
+      'targetUserName',
+      'targetIsModerator',
+      'targetIsSubscribed',
+      'targetIsVip'
+    ] as const;
+
+    const props = {} as UserProps;
+
+    for (const field of needFields) {
+      const value = customEventResponseArgs[field];
+
+      if (value === null || value === undefined) {
+        throw new Error(`Required user field is not exists: ${field}`);
+      }
+
+      if (field === 'targetUserId') {
+        props.id = String(value);
+      }
+      if (field === 'targetUserName') {
+        props.name = String(value);
+      }
+      if (field === 'targetIsModerator') {
+        props.isModerator = Boolean(value);
+      }
+      if (field === 'targetIsSubscribed') {
+        props.isSubscribed = Boolean(value);
+      }
+      if (field === 'targetIsVip') {
+        props.isVip = Boolean(value);
+      }
+    }
+
+    return User.fromProps(props);
   }
 }
