@@ -15,15 +15,33 @@ export default class SendTracksQueue implements Action {
     if (!tracks.length) {
       return await twitch.sendMessage('Очередь пуста.').catch(logger.error.bind(logger));
     }
+
     const messages: string[] = [];
+    const prefix = 'Очередь: ';
+    const separator = ' | ';
+    const messageLimit = 500;
+    const maxIdx = tracks.length - 1;
+    let messageSize = prefix.length;
 
     for (const [index, track] of tracks.entries()) {
       const title = (track.title || 'Название не найдено').replace(/[\r\n]+/g, ' ').trim();
       const entry = `${index + 1}# ${title}`;
 
+      messageSize += entry.length;
+
+      if (index < maxIdx) {
+        messageSize += separator.length;
+      }
+
+      if (messageSize >= messageLimit) {
+        continue;
+      }
+
       messages.push(entry);
     }
 
-    await twitch.sendMessage(`Очередь: ${messages.join(' | ')}`).catch(logger.error.bind(logger));
+    await twitch.sendMessage(
+      `${prefix}${messages.join(separator)}`
+    ).catch(logger.error.bind(logger));
   }
 }
