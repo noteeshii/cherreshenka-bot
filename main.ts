@@ -64,4 +64,8 @@ const shutdown = () => {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-await client.connect().catch(logger.error.bind(logger));
+await client.connect().catch(logger.error.bind(logger)).then(async() => {
+  const user = await twitch.getUser('noteeshii');
+
+  console.log(JSON.stringify(user, undefined, 2));
+});

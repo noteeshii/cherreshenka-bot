@@ -134,10 +134,13 @@ export default class Twitch {
   }
 
   public async getUser(userName: string) {
-    const { customEventResponseArgs } = await this.ensureSuccess<{
+    const { args, customEventResponseArgs } = await this.ensureSuccess<{
       customEventResponseArgs?: Record<string, unknown>;
+      args?: Record<string, unknown>;
     }>(this.client.doAction({ name: 'GetUserInfo' }, { userName }, { customEventResponse: true }));
 
+    console.log('Args:', JSON.stringify(args, undefined, 2));
+    console.log('Custom:', JSON.stringify(customEventResponseArgs, undefined, 2));
     if (!customEventResponseArgs) {
       throw new Error('Custom event response is not exists');
     }
