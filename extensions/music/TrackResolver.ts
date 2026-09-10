@@ -46,16 +46,19 @@ export default class TrackResolver {
     }
 
     if (/^music\.yandex\.(ru|com|kz|by|ua)$/.test(url.hostname)) {
-      const track = /^\/album\/([0-9]+)\/track\/([0-9]+)\/?$/.exec(url.pathname);
-      if (!track) {
+      const albumTrack = /^\/album\/([0-9]+)\/track\/([0-9]+)\/?$/.exec(url.pathname);
+      const track = /^\/track\/([0-9]+)\/?$/.exec(url.pathname);
+      if (!albumTrack && !track) {
         throw new Error(
-          'Для Яндекс Музыки нужна ссылка вида https://music.yandex.ru/album/123/track/456.',
+          'Для Яндекс Музыки нужна ссылка на трек вида https://music.yandex.ru/album/123/track/456 или https://music.yandex.ru/track/456.',
         );
       }
       return {
         source: 'yandex' as const,
         provider: new Yandex(this.config.music),
-        url: `https://${url.hostname}/album/${track[1]}/track/${track[2]}`,
+        url: albumTrack
+          ? `https://${url.hostname}/album/${albumTrack[1]}/track/${albumTrack[2]}`
+          : `https://${url.hostname}/track/${track![1]}`,
       };
     }
 

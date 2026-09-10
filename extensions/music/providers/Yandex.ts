@@ -152,7 +152,7 @@ export default class YandexMusicClient implements Provider {
     } catch {
       throw new Error('Яндекс Музыка: укажите ID или ссылку на трек.');
     }
-    const match = /^\/album\/\d+\/track\/(\d+)\/?$/.exec(url.pathname);
+    const match = /^(?:\/album\/\d+)?\/track\/(\d+)\/?$/.exec(url.pathname);
     if (!match || !/^music\.yandex\.(ru|com|kz|by|ua)$/.test(url.hostname)) {
       throw new Error(`Яндекс Музыка: укажите ссылку на трек или его числовой ID. ${input}`);
     }
@@ -160,9 +160,17 @@ export default class YandexMusicClient implements Provider {
   }
 
   private parseTrackId(url: string) {
-    const parts = new URL(url).pathname.split('/');
+    const pathname = new URL(url).pathname;
+    const albumTrack = /^\/album\/(\d+)\/track\/(\d+)\/?$/.exec(pathname);
+    if (albumTrack) {
+      return { url, id: `${albumTrack[2]}:${albumTrack[1]}` };
+    }
+    const track = /^\/track\/(\d+)\/?$/.exec(pathname);
+    if (track) {
+      return { url, id: track[1] };
+    }
 
-    return { url: url, id: `${parts[4]}:${parts[2]}` };
+    throw new Error('Яндекс Музыка: укажите ссылку на трек.');
   }
 
   private async getMetadata(input: string, signal: AbortSignal) {
@@ -186,7 +194,10 @@ export default class YandexMusicClient implements Provider {
       : '';
     const version = typeof track.version === 'string' ? ` (${track.version})` : '';
     const title = `${artists ? `${artists} - ` : ''}${track.title}${version}`;
-    return { url, id, title };
+    if (typeof track.id !== 'string' && typeof track.id !== 'number') {
+      throw new Error('Яндекс Музыка: отсутствует ID трека.');
+    }
+    return { url, id: String(track.id), title };
   }
 
   private async getAudioFormat(trackId: string, signal: AbortSignal): Promise<JsonObject> {
