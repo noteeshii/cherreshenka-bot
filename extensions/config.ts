@@ -10,6 +10,21 @@ const parseConnectionUrl = (value: string): URL => {
   return url;
 };
 
+const parseBoolean = (value: string | undefined, name: string, defaultValue: boolean): boolean => {
+  if (value === undefined || value.trim() === '') return defaultValue;
+
+  switch (value.trim().toLowerCase()) {
+    case '1':
+    case 'true':
+      return true;
+    case '0':
+    case 'false':
+      return false;
+    default:
+      throw new Error(`${name} должен быть true/false или 1/0.`);
+  }
+};
+
 export namespace Config {
   export type Props = {
     connection: {
@@ -53,7 +68,7 @@ class Config {
 
     const url = parseConnectionUrl(String(env.STREAMERBOT_URL));
     const defaultPort = url.protocol === 'wss:' ? 443 : 80;
-    const useBot = Boolean(Number(env.TWITCH_USE_BOT || 1));
+    const useBot = parseBoolean(env.TWITCH_USE_BOT, 'TWITCH_USE_BOT', true);
 
     return new Config({
       connection: {

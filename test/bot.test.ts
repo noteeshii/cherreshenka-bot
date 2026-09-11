@@ -5,7 +5,7 @@ import { Bot } from '../bot.ts';
 import { Config } from '#extensions';
 import { testConfig } from './fixtures.ts';
 import Track from '#extensions/music/Track';
-import { Twitch, Logger } from '#extensions';
+import { Twitch, Logger, Storage } from '#extensions';
 
 function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?: Error) {
   const calls: unknown[][] = [];
@@ -46,6 +46,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
       },
     } as any,
     new Logger({ level: '' }),
+    new Storage(),
   );
   return { bot, calls };
 }
@@ -78,14 +79,11 @@ test('транспорт передаёт реальные запросы API и
   const twitch = new Twitch({ useBot: true, action: 'Dispatch' }, client);
   await twitch.sendMessage('hi');
   await twitch.announce('news');
-  await twitch.timeout('@Viewer', 30, 'spam');
+  await twitch.timeoutUser('@Viewer');
   assert.deepEqual(calls, [
     ['twitch', 'hi', { bot: true, internal: false }],
     [{ name: 'Dispatch' }, { operation: 'announce', message: 'news', bot: true }],
-    [
-      { name: 'Dispatch' },
-      { operation: 'timeout', username: 'viewer', duration: 30, reason: 'spam', bot: true },
-    ],
+    [{ name: 'TimeoutUser' }, { userName: '@Viewer' }],
   ]);
   client.sendMessage = async () => ({ status: 'error' }) as never;
   await assert.rejects(twitch.sendMessage('hi'));
@@ -122,6 +120,12 @@ test('настройки читаются из изолированного ок
   assert.equal(Config.fromEnv().streamerBot.useBot, true);
   process.env.TWITCH_USE_BOT = '0';
   assert.equal(Config.fromEnv().streamerBot.useBot, false);
+  process.env.TWITCH_USE_BOT = 'true';
+  assert.equal(Config.fromEnv().streamerBot.useBot, true);
+  process.env.TWITCH_USE_BOT = 'false';
+  assert.equal(Config.fromEnv().streamerBot.useBot, false);
+  process.env.TWITCH_USE_BOT = 'other';
+  assert.throws(() => Config.fromEnv(), /TWITCH_USE_BOT/);
   process.env.STREAMERBOT_URL = 'https://localhost';
   assert.throws(() => Config.fromEnv());
 });
