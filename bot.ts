@@ -1,8 +1,8 @@
-import type { StreamerbotEventData } from '@streamerbot/client';
-
-import type { Music, Twitch, Config, Logger } from '#extensions';
+import type { Music, Twitch, Config, Logger, Storage } from '#extensions';
 import {
   type Action,
+  type RewardEvent,
+  type CommandEvent,
   PauseCurrentTrack,
   ResumeCurrentTrack,
   SendCurrentTrack,
@@ -14,20 +14,8 @@ import {
   RemoveTrackFromQueue,
   LikeCurrentTrack,
   DislikeCurrentTrack,
+  ShootUser,
 } from '#actions';
-
-type RewardEvent = StreamerbotEventData<'Twitch.RewardRedemption'>;
-type CommandEvent = {
-  id: string;
-  name: string;
-  command: string;
-  message: string;
-  user: {
-    id: string;
-    name: string;
-    role: number;
-  };
-};
 
 export class Bot {
   private readonly actions: Action[];
@@ -35,12 +23,14 @@ export class Bot {
   private readonly music: Music;
   private readonly config: Config;
   private readonly logger: Logger;
+  private readonly storage: Storage;
 
-  constructor(twitch: Twitch, config: Config, music: Music, logger: Logger) {
+  constructor(twitch: Twitch, config: Config, music: Music, logger: Logger, storage: Storage) {
     this.twitch = twitch;
     this.music = music;
     this.config = config;
     this.logger = logger;
+    this.storage = storage;
 
     this.actions = [
       new PauseCurrentTrack(),
@@ -54,6 +44,7 @@ export class Bot {
       new RemoveTrackFromQueue(),
       new LikeCurrentTrack(),
       new DislikeCurrentTrack(),
+      new ShootUser(),
     ];
   }
 
@@ -70,7 +61,12 @@ export class Bot {
       return;
     }
 
-    await action.run(payload, { twitch: this.twitch, music: this.music, logger: commandLogger });
+    await action.run(payload, {
+      twitch: this.twitch,
+      music: this.music,
+      logger: commandLogger,
+      storage: this.storage,
+    });
 
     commandLogger.debug(`Completed: ${payload.name}`);
   }
@@ -94,7 +90,12 @@ export class Bot {
       return;
     }
 
-    await action.run(reward, { twitch: this.twitch, music: this.music, logger: rewardLogger });
+    await action.run(reward, {
+      twitch: this.twitch,
+      music: this.music,
+      logger: rewardLogger,
+      storage: this.storage,
+    });
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
   }
