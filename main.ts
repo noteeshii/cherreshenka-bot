@@ -1,8 +1,7 @@
 import { StreamerbotClient } from '@streamerbot/client';
 
 import { checkMusicDependencies } from '#extensions/music/dependencies.ts';
-
-import { Config, Logger, Music, Twitch } from '#extensions';
+import { Config, Logger, Music, Twitch, Storage } from '#extensions';
 
 import { Bot } from './bot.ts';
 import { checkChatConnection } from './chat-connection.ts';
@@ -20,6 +19,10 @@ const client = new StreamerbotClient({
   retries: -1,
   logLevel: 'warn',
   onData: (payload) => {
+    if (payload?.status === 'error') {
+      socketLogger.error(`Streamer.bot отклонил запрос: ${payload.error ?? 'причина не указана'}`);
+      return;
+    }
     if (payload?.event?.source && payload?.event?.type) {
       socketLogger.info(`${payload.event.source}.${payload.event.type}`);
     }
@@ -35,9 +38,13 @@ const client = new StreamerbotClient({
   onError: (error) => socketLogger.error(`Ошибка WebSocket: ${error.message}`),
 });
 
+const storage = new Storage();
+
+await storage.open();
+
 const music = new Music(config, logger.withContext('Music'));
 const twitch = new Twitch(config.streamerBot, client);
-const bot = new Bot(twitch, config, music, logger.withContext('Bot'));
+const bot = new Bot(twitch, config, music, logger.withContext('Bot'), storage);
 
 client.on('Command.Triggered', ({ data }) => {
   bot.onCommand(data).catch(socketLogger.error.bind(socketLogger));
@@ -56,7 +63,7 @@ const shutdown = () => {
 
   stopping = true;
 
-  Promise.all([music.close(), client.disconnect()])
+  Promise.all([storage.close(), music.close(), client.disconnect()])
     .catch(logger.error.bind(logger))
     .finally(() => process.exit(0));
 };
@@ -64,6 +71,4 @@ const shutdown = () => {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-await client
-  .connect()
-  .catch(logger.error.bind(logger));
+await client.connect().catch(logger.error.bind(logger));
