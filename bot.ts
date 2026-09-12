@@ -17,6 +17,15 @@ import {
   ShootUser,
 } from '#actions';
 
+// Streamer.bot may pass Unicode format characters (for example U+034F) after
+// a command argument. They look like spaces but String.prototype.trim() does
+// not remove them.
+const trimMessage = (message: string) =>
+  message.replace(
+    /^[\s\p{Default_Ignorable_Code_Point}]+|[\s\p{Default_Ignorable_Code_Point}]+$/gu,
+    '',
+  );
+
 export class Bot {
   private readonly actions: Action[];
   private readonly twitch: Twitch;
@@ -44,7 +53,7 @@ export class Bot {
       new RemoveTrackFromQueue(),
       new LikeCurrentTrack(),
       new DislikeCurrentTrack(),
-      new ShootUser(),
+      new ShootUser(this.config),
     ];
   }
 
@@ -61,12 +70,15 @@ export class Bot {
       return;
     }
 
-    await action.run(payload, {
-      twitch: this.twitch,
-      music: this.music,
-      logger: commandLogger,
-      storage: this.storage,
-    });
+    await action.run(
+      { ...payload, message: trimMessage(payload.message) },
+      {
+        twitch: this.twitch,
+        music: this.music,
+        logger: commandLogger,
+        storage: this.storage,
+      },
+    );
 
     commandLogger.debug(`Completed: ${payload.name}`);
   }

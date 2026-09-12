@@ -54,7 +54,10 @@ export default class Storage {
   }
 
   public async open() {
-    const file = await readFile(this.storagePath, { encoding: 'utf8', flag: 'w+' });
+    const file = await readFile(this.storagePath, { encoding: 'utf8', flag: 'r' }).catch((err) => {
+      console.error(err);
+      return '';
+    });
 
     if (file.length) {
       this.permanent = JSON.parse(file);

@@ -2,7 +2,8 @@ import type { StreamerbotClient } from '@streamerbot/client';
 
 import type { Config } from '#extensions';
 
-import User, { type Props as UserProps } from './User.ts';
+import User from './User.ts';
+import TwitchApi from './TwitchApi.ts';
 
 const MAX_MESSAGE_LENGTH = 500;
 
@@ -19,11 +20,19 @@ const chatText = (value: string) => {
 };
 
 export default class Twitch {
-  private readonly config: Config['streamerBot'];
+  private readonly cachedUsers: Map<string, User>;
+  private readonly config: Config;
   private readonly client: Client;
-  constructor(config: Config['streamerBot'], client: Client) {
+  private readonly twitchApi: TwitchApi;
+  constructor(config: Config, client: Client) {
     this.config = config;
     this.client = client;
+    this.cachedUsers = new Map();
+    this.twitchApi = new TwitchApi({
+      accessToken: this.config.channel.accessToken,
+      broadcasterId: this.config.channel.id,
+      clientId: this.config.channel.clientId,
+    });
   }
 
   private async ensureSuccess<Response>(
@@ -58,7 +67,7 @@ export default class Twitch {
         id: crypto.randomUUID(),
         platform: 'twitch',
         message: text,
-        bot: this.config.useBot,
+        bot: true,
         internal: false,
       });
       return;
@@ -66,7 +75,7 @@ export default class Twitch {
 
     await this.ensureSuccess(
       this.client.sendMessage('twitch', text, {
-        bot: this.config.useBot,
+        bot: true,
         internal: false,
       }),
     );
@@ -75,11 +84,10 @@ export default class Twitch {
   public async announce(message: string) {
     await this.ensureSuccess(
       this.client.doAction(
-        { name: this.config.action },
+        { name: 'SendAnnounce' },
         {
-          operation: 'announce',
           message: chatText(message),
-          bot: this.config.useBot,
+          bot: true,
         },
       ),
     );
@@ -114,52 +122,22 @@ export default class Twitch {
   }
 
   public async getUser(userName: string) {
-    const { customEventResponseArgs } = await this.ensureSuccess<{
-      customEventResponseArgs?: Record<string, unknown>;
-    }>(this.client.doAction({ name: 'GetUserInfo' }, { userName }, { customEventResponse: true }));
+    const trimmed = userName.trim();
 
-    if (!customEventResponseArgs) {
-      throw new Error('Custom event response is not exists');
+    const cached = this.cachedUsers.get(trimmed);
+
+    if (cached) {
+      return cached;
     }
 
-    const needFields = [
-      'targetUserId',
-      'targetUserName',
-      'targetIsModerator',
-      'targetIsSubscribed',
-      'targetIsVip',
-      'targetIsFollowing',
-    ] as const;
+    const user = await this.twitchApi.getUser(trimmed);
 
-    const props = {} as UserProps;
+    this.cachedUsers.set(user.name, user);
 
-    for (const field of needFields) {
-      const value = customEventResponseArgs[field];
+    return user;
+  }
 
-      if (value === null || value === undefined) {
-        throw new Error(`Required user field is not exists: ${field}`);
-      }
-
-      if (field === 'targetUserId') {
-        props.id = String(value);
-      }
-      if (field === 'targetUserName') {
-        props.name = String(value);
-      }
-      if (field === 'targetIsModerator') {
-        props.isModerator = Boolean(value);
-      }
-      if (field === 'targetIsSubscribed') {
-        props.isSubscribed = Boolean(value);
-      }
-      if (field === 'targetIsVip') {
-        props.isVip = Boolean(value);
-      }
-      if (field === 'targetIsFollowing') {
-        props.isFollowing = Boolean(value);
-      }
-    }
-
-    return User.fromProps(props);
+  public async doAction(name: string, args: Record<string, unknown>) {
+    await this.ensureSuccess(this.client.doAction({ name }, args));
   }
 }

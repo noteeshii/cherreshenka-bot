@@ -43,7 +43,7 @@ const storage = new Storage();
 await storage.open();
 
 const music = new Music(config, logger.withContext('Music'));
-const twitch = new Twitch(config.streamerBot, client);
+const twitch = new Twitch(config, client);
 const bot = new Bot(twitch, config, music, logger.withContext('Bot'), storage);
 
 client.on('Command.Triggered', ({ data }) => {

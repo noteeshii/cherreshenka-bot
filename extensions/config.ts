@@ -10,21 +10,6 @@ const parseConnectionUrl = (value: string): URL => {
   return url;
 };
 
-const parseBoolean = (value: string | undefined, name: string, defaultValue: boolean): boolean => {
-  if (value === undefined || value.trim() === '') return defaultValue;
-
-  switch (value.trim().toLowerCase()) {
-    case '1':
-    case 'true':
-      return true;
-    case '0':
-    case 'false':
-      return false;
-    default:
-      throw new Error(`${name} должен быть true/false или 1/0.`);
-  }
-};
-
 export namespace Config {
   export type Props = {
     connection: {
@@ -37,13 +22,12 @@ export namespace Config {
     logger: {
       level: string;
     };
-    streamerBot: {
-      useBot: boolean;
-      action: string;
-    };
     channel: {
+      id: string;
       name: string;
       botLogin: string;
+      accessToken: string;
+      clientId: string;
     };
     rewards: {
       musicRewardId: string;
@@ -52,6 +36,9 @@ export namespace Config {
       mpvPath: string;
       ytDlpPath: string;
       yandexMusicToken: string;
+    };
+    actions: {
+      hitChance: number;
     };
   };
 }
@@ -68,8 +55,6 @@ class Config {
 
     const url = parseConnectionUrl(String(env.STREAMERBOT_URL));
     const defaultPort = url.protocol === 'wss:' ? 443 : 80;
-    const useBot = parseBoolean(env.TWITCH_USE_BOT, 'TWITCH_USE_BOT', true);
-
     return new Config({
       connection: {
         scheme: url.protocol.slice(0, -1),
@@ -79,14 +64,12 @@ class Config {
         password: env.STREAMERBOT_PASSWORD || '',
       },
 
-      streamerBot: {
-        useBot,
-        action: env.STREAMERBOT_ACTION ?? 'Cherreshenka Dispatch',
-      },
-
       channel: {
-        name: (env.TWITCH_CHANNEL ?? '').toLowerCase(),
+        id: String(env.TWITCH_CHANNEL_ID ?? ''),
+        name: (env.TWITCH_CHANNEL_NAME ?? '').toLowerCase(),
         botLogin: (env.TWITCH_BOT_LOGIN ?? '').toLowerCase(),
+        accessToken: String(env.TWITCH_ACCESS_TOKEN ?? ''),
+        clientId: String(env.TWITCH_CLIENT_ID ?? ''),
       },
 
       rewards: {
@@ -102,6 +85,10 @@ class Config {
       logger: {
         level: env.LOG_LEVEL || 'all',
       },
+
+      actions: {
+        hitChance: Number(env.HIT_CHANCE || 6),
+      },
     });
   }
 
@@ -111,9 +98,6 @@ class Config {
   get logger() {
     return this.props.logger;
   }
-  get streamerBot() {
-    return this.props.streamerBot;
-  }
   get channel() {
     return this.props.channel;
   }
@@ -122,6 +106,9 @@ class Config {
   }
   get music() {
     return this.props.music;
+  }
+  get actions() {
+    return this.props.actions;
   }
 }
 
