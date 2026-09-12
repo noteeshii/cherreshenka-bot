@@ -6,10 +6,16 @@ export function testConfig(
   return new Config({
     connection: { scheme: 'ws', host: '127.0.0.1', port: 8080, endpoint: '/', password: '' },
     logger: { level: 'all' },
-    streamerBot: { useBot: true, action: 'Dispatch' },
-    channel: { name: '', botLogin: 'bot' },
+    channel: {
+      id: '123',
+      name: 'streamer',
+      botLogin: 'bot',
+      accessToken: 'access-token',
+      clientId: 'client-id',
+    },
     rewards: { musicRewardId: 'reward' },
     music: { mpvPath: 'mpv', ytDlpPath: 'yt-dlp', yandexMusicToken: '' },
+    actions: { hitChance: 6 },
     ...overrides,
   });
 }

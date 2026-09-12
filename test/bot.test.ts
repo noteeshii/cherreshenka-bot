@@ -64,6 +64,14 @@ test('action срабатывает', async () => {
   assert.deepEqual(calls, [['message', 'Сейчас играет: Test song']]);
 });
 
+test('удаляет невидимые символы Streamer.bot с краёв аргумента', async () => {
+  const { bot, calls } = setup();
+
+  await bot.onCommand(command('SetTracksVolume', '42 \u034F'));
+
+  assert.deepEqual(calls, [['volume', 42]]);
+});
+
 test('транспорт передаёт реальные запросы API и проверяет ошибки', async () => {
   const calls: unknown[][] = [];
   const client = {
@@ -76,13 +84,13 @@ test('транспорт передаёт реальные запросы API и
       return { status: 'ok' };
     },
   } as unknown as Pick<StreamerbotClient, 'sendMessage' | 'doAction'>;
-  const twitch = new Twitch({ useBot: true, action: 'Dispatch' }, client);
+  const twitch = new Twitch(testConfig(), client);
   await twitch.sendMessage('hi');
   await twitch.announce('news');
   await twitch.timeoutUser('@Viewer');
   assert.deepEqual(calls, [
     ['twitch', 'hi', { bot: true, internal: false }],
-    [{ name: 'Dispatch' }, { operation: 'announce', message: 'news', bot: true }],
+    [{ name: 'SendAnnounce' }, { message: 'news', bot: true }],
     [{ name: 'TimeoutUser' }, { userName: '@Viewer' }],
   ]);
   client.sendMessage = async () => ({ status: 'error' }) as never;
@@ -96,7 +104,7 @@ test('сообщение команды отправляется без ожид
     sendMessage: async () => ({ status: 'ok' }),
     doAction: async () => ({ status: 'ok' }),
   } as unknown as Pick<StreamerbotClient, 'sendMessage' | 'doAction' | 'send'>;
-  const twitch = new Twitch({ useBot: true, action: 'Dispatch' }, client);
+  const twitch = new Twitch(testConfig(), client);
 
   await twitch.sendMessage('Очередь пуста.');
 
@@ -115,17 +123,22 @@ test('сообщение команды отправляется без ожид
 });
 
 test('настройки читаются из изолированного окружения', (t) => {
-  t.mock.property(process, 'env', { STREAMERBOT_URL: 'ws://localhost:8080/', TWITCH_USE_BOT: '1' });
+  t.mock.property(process, 'env', {
+    STREAMERBOT_URL: 'ws://localhost:8080/',
+    TWITCH_CHANNEL_ID: '123',
+    TWITCH_CHANNEL_NAME: 'Streamer',
+    TWITCH_BOT_LOGIN: 'Bot',
+    TWITCH_ACCESS_TOKEN: 'access-token',
+    TWITCH_CLIENT_ID: 'client-id',
+  });
   assert.equal(Config.fromEnv().connection.port, 8080);
-  assert.equal(Config.fromEnv().streamerBot.useBot, true);
-  process.env.TWITCH_USE_BOT = '0';
-  assert.equal(Config.fromEnv().streamerBot.useBot, false);
-  process.env.TWITCH_USE_BOT = 'true';
-  assert.equal(Config.fromEnv().streamerBot.useBot, true);
-  process.env.TWITCH_USE_BOT = 'false';
-  assert.equal(Config.fromEnv().streamerBot.useBot, false);
-  process.env.TWITCH_USE_BOT = 'other';
-  assert.throws(() => Config.fromEnv(), /TWITCH_USE_BOT/);
+  assert.deepEqual(Config.fromEnv().channel, {
+    id: '123',
+    name: 'streamer',
+    botLogin: 'bot',
+    accessToken: 'access-token',
+    clientId: 'client-id',
+  });
   process.env.STREAMERBOT_URL = 'https://localhost';
   assert.throws(() => Config.fromEnv());
 });

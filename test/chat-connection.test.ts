@@ -20,34 +20,33 @@ function connection(authenticated = true, botUser = 'bot') {
 
 test('подключение без авторизации объясняет необходимость пароля', async () => {
   await assert.rejects(
-    checkChatConnection(
-      connection(false),
-      testConfig({ channel: { name: 'streamer', botLogin: 'bot' } }),
-    ),
+    checkChatConnection(connection(false), testConfig()),
     /STREAMERBOT_PASSWORD/,
   );
 });
 
 test('проверка обнаруживает отсутствующий Bot Account и неверный канал', async () => {
+  await assert.rejects(checkChatConnection(connection(true, ''), testConfig()), /Bot Account/);
   await assert.rejects(
     checkChatConnection(
-      connection(true, ''),
-      testConfig({ channel: { name: 'streamer', botLogin: 'bot' } }),
+      connection(),
+      testConfig({
+        channel: {
+          id: '123',
+          name: 'wrong',
+          botLogin: 'bot',
+          accessToken: 'access-token',
+          clientId: 'client-id',
+        },
+      }),
     ),
-    /Bot Account/,
-  );
-  await assert.rejects(
-    checkChatConnection(connection(), testConfig({ channel: { name: 'wrong', botLogin: 'bot' } })),
     /TWITCH_CHANNEL/,
   );
 });
 
 test('проверка сообщает выбранные аккаунты без отправки сообщения', async () => {
   assert.match(
-    await checkChatConnection(
-      connection(),
-      testConfig({ channel: { name: 'streamer', botLogin: 'bot' } }),
-    ),
+    await checkChatConnection(connection(), testConfig()),
     /Канал: streamer; аккаунт для ответов: bot/,
   );
 });
@@ -60,9 +59,6 @@ test('SendMessage сохраняет причину ошибки и объясн
     const client = {
       sendMessage: async () => ({ status: 'error', error }),
     } as unknown as StreamerbotClient;
-    await assert.rejects(
-      new Twitch({ useBot: true, action: 'Dispatch' }, client).sendMessage('test'),
-      expected,
-    );
+    await assert.rejects(new Twitch(testConfig(), client).sendMessage('test'), expected);
   }
 });
