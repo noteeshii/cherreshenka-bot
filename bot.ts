@@ -15,6 +15,8 @@ import {
   LikeCurrentTrack,
   DislikeCurrentTrack,
   ShootUser,
+  SendShootsStat,
+  SendShootLeaders,
 } from '#actions';
 
 // Streamer.bot may pass Unicode format characters (for example U+034F) after
@@ -54,6 +56,8 @@ export class Bot {
       new LikeCurrentTrack(),
       new DislikeCurrentTrack(),
       new ShootUser(this.config),
+      new SendShootsStat(),
+      new SendShootLeaders(),
     ];
   }
 

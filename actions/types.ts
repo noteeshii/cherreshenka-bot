@@ -26,3 +26,11 @@ export type CommandEvent = {
     role: number;
   };
 };
+
+export type UserStorage = {
+  killsCount?: number;
+  shootsCount?: number;
+  deathsCount?: number;
+  shootsSelfCount?: number;
+  killsSelfCount?: number;
+};

@@ -1,8 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
 type Node = {
-  users: Record<string, unknown>;
-  variables: Record<string, unknown>;
+  users: Record<string, any>;
+  variables: Record<string, any>;
 };
 
 export default class Storage {

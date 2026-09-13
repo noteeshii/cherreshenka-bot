@@ -1,15 +1,7 @@
 import type { Config } from '#extensions';
 import { getRandomNumber } from '#utils';
 
-import type { Context, Action, CommandEvent } from './types.ts';
-
-type UserStorage = {
-  killsCount?: number;
-  shootsCount?: number;
-  deathsCount?: number;
-  shootsSelfCount?: number;
-  killsSelfCount?: number;
-};
+import type { Context, Action, CommandEvent, UserStorage } from './types.ts';
 
 export default class ShootUser implements Action {
   private readonly chance: number;

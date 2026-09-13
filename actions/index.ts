@@ -10,4 +10,6 @@ export { default as RemoveTrackFromQueue } from './RemoveTrackFromQueue.ts';
 export { default as LikeCurrentTrack } from './LikeCurrentTrack.ts';
 export { default as DislikeCurrentTrack } from './DislikeCurrentTrack.ts';
 export { default as ShootUser } from './ShootUser.ts';
+export { default as SendShootsStat } from './SendShootsStat.ts';
+export { default as SendShootLeaders } from './SendShootLeaders.ts';
 export type { Action, RewardEvent, CommandEvent } from './types.ts';
