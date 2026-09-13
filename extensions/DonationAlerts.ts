@@ -234,7 +234,6 @@ export default class DonationAlerts {
     });
 
     if (!response.ok) {
-      console.log(response);
       throw new Error(`DonationAlerts API вернул HTTP ${response.status}.`);
     }
 

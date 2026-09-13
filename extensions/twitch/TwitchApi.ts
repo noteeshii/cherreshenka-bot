@@ -99,7 +99,6 @@ export default class TwitchApi {
     path: string,
     parameters: Record<string, string>,
   ) {
-    console.log(JSON.stringify(parameters, undefined, 2));
     const query = new URLSearchParams(parameters);
     const response = await this.fetch(`${TwitchApi.baseUrl}${path}?${query}`, {
       headers: {

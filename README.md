@@ -41,7 +41,7 @@ npm run check
 npm start
 ```
 
-Для разработки — `npm run dev`. Ctrl+C / SIGTERM останавливает плеер, очищает очередь и закрывает WebSocket.
+Для разработки — `npm run dev`. Ctrl+C, закрытие терминала (`SIGHUP`) или `SIGTERM` останавливают плеер, очищают очередь и закрывают WebSocket.
 
 ## Команды
 
