@@ -1,7 +1,7 @@
 import { StreamerbotClient } from '@streamerbot/client';
 
 import { checkMusicDependencies } from '#extensions/music/dependencies.ts';
-import { Config, Logger, Music, Twitch, Storage } from '#extensions';
+import { Config, Logger, Music, Twitch, Storage, DonationAlerts } from '#extensions';
 
 import { Bot } from './bot.ts';
 import { checkChatConnection } from './chat-connection.ts';
@@ -45,6 +45,7 @@ await storage.open();
 const music = new Music(config, logger.withContext('Music'));
 const twitch = new Twitch(config, client);
 const bot = new Bot(twitch, config, music, logger.withContext('Bot'), storage);
+const donationAlerts = new DonationAlerts(config.donates);
 
 client.on('Command.Triggered', ({ data }) => {
   bot.onCommand(data).catch(socketLogger.error.bind(socketLogger));
@@ -52,6 +53,10 @@ client.on('Command.Triggered', ({ data }) => {
 
 client.on('Twitch.RewardRedemption', ({ data }) => {
   bot.onReward(data).catch(socketLogger.error.bind(socketLogger));
+});
+
+donationAlerts.onDonate((donate) => {
+  bot.onDonate(donate).catch(socketLogger.error.bind(socketLogger));
 });
 
 let stopping = false;
@@ -63,7 +68,7 @@ const shutdown = () => {
 
   stopping = true;
 
-  Promise.all([storage.close(), music.close(), client.disconnect()])
+  Promise.all([storage.close(), music.close(), client.disconnect(), donationAlerts.close()])
     .catch(logger.error.bind(logger))
     .finally(() => process.exit(0));
 };

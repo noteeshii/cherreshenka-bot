@@ -13,6 +13,7 @@ export function testConfig(
       accessToken: 'access-token',
       clientId: 'client-id',
     },
+    donates: { accessToken: 'donation-alerts-access-token' },
     rewards: { musicRewardId: 'reward' },
     music: { mpvPath: 'mpv', ytDlpPath: 'yt-dlp', yandexMusicToken: '' },
     actions: { hitChance: 6 },

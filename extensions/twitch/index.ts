@@ -81,13 +81,12 @@ export default class Twitch {
     );
   }
 
-  public async announce(message: string) {
+  public async sendAnnounce(message: string) {
     await this.ensureSuccess(
       this.client.doAction(
         { name: 'SendAnnounce' },
         {
           message: chatText(message),
-          bot: true,
         },
       ),
     );

@@ -1,4 +1,4 @@
-import type { Music, Twitch, Config, Logger, Storage } from '#extensions';
+import type { Music, Twitch, Config, Logger, Storage, Donation } from '#extensions';
 import {
   type Action,
   type RewardEvent,
@@ -17,6 +17,7 @@ import {
   ShootUser,
   SendShootsStat,
   SendShootLeaders,
+  SendDonateMessage,
 } from '#actions';
 
 // Streamer.bot may pass Unicode format characters (for example U+034F) after
@@ -58,6 +59,7 @@ export class Bot {
       new ShootUser(this.config),
       new SendShootsStat(),
       new SendShootLeaders(),
+      new SendDonateMessage(),
     ];
   }
 
@@ -114,5 +116,28 @@ export class Bot {
     });
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
+  }
+
+  async onDonate(donate: Donation) {
+    const donateLogger = this.logger.withContext('Donate');
+
+    donateLogger.debug(`Starting: SendDonateMessage`);
+
+    const action = this.actions.find((action) => action.check('SendDonateMessage'));
+
+    if (!action) {
+      donateLogger.debug(`Action not found: SendDonateMessage`);
+
+      return;
+    }
+
+    await action.run(donate, {
+      twitch: this.twitch,
+      music: this.music,
+      logger: donateLogger,
+      storage: this.storage,
+    });
+
+    donateLogger.debug(`Completed: SendDonateMessage`);
   }
 }

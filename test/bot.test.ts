@@ -64,6 +64,22 @@ test('action срабатывает', async () => {
   assert.deepEqual(calls, [['message', 'Сейчас играет: Test song']]);
 });
 
+test('донат без сообщения отправляется в чат', async () => {
+  const { bot, calls } = setup();
+
+  await bot.onDonate({
+    id: 1,
+    username: 'Иван',
+    messageType: 'text',
+    message: null,
+    amount: 500,
+    currency: 'RUB',
+    createdAt: '2026-09-13 12:00:00',
+  });
+
+  assert.deepEqual(calls, [['message', 'Донат от Иван на сумму 500RUB']]);
+});
+
 test('удаляет невидимые символы Streamer.bot с краёв аргумента', async () => {
   const { bot, calls } = setup();
 

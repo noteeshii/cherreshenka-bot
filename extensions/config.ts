@@ -29,6 +29,9 @@ export namespace Config {
       accessToken: string;
       clientId: string;
     };
+    donates: {
+      accessToken: string;
+    };
     rewards: {
       musicRewardId: string;
     };
@@ -72,6 +75,10 @@ class Config {
         clientId: String(env.TWITCH_CLIENT_ID ?? ''),
       },
 
+      donates: {
+        accessToken: String(env.DONATION_ALERTS_ACCESS_TOKEN ?? ''),
+      },
+
       rewards: {
         musicRewardId: env.MUSIC_REWARD_ID ?? '',
       },
@@ -100,6 +107,9 @@ class Config {
   }
   get channel() {
     return this.props.channel;
+  }
+  get donates() {
+    return this.props.donates;
   }
   get rewards() {
     return this.props.rewards;
