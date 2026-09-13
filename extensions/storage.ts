@@ -6,6 +6,9 @@ type Node = {
 };
 
 export default class Storage {
+  private isSaved = true;
+  private timer: NodeJS.Timeout | null = null;
+
   private temporary: Node = {
     users: {},
     variables: {},
@@ -15,18 +18,18 @@ export default class Storage {
     variables: {},
   };
 
-  constructor() {}
-
   private get storagePath() {
     return new URL('./../storage.json', import.meta.url);
   }
 
   public setTemporary(values: Node) {
     this.temporary = values;
+    this.isSaved = false;
   }
 
   public setPermanent(values: Node) {
     this.permanent = values;
+    this.isSaved = false;
   }
 
   public getTemporary() {
@@ -47,10 +50,12 @@ export default class Storage {
 
   public setUserTemporary<Val extends {}>(userName: string, value: Val) {
     this.temporary.users[userName] = value;
+    this.isSaved = false;
   }
 
   public setUserPermanent<Val extends {}>(userName: string, value: Val) {
     this.permanent.users[userName] = value;
+    this.isSaved = false;
   }
 
   public async open() {
@@ -62,11 +67,35 @@ export default class Storage {
     if (file.length) {
       this.permanent = JSON.parse(file);
     }
+
+    this.autoSave();
   }
 
   public async close() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    await this.save();
+  }
+
+  private async save() {
     const content = JSON.stringify(this.permanent, undefined, 2);
 
     await writeFile(this.storagePath, content);
+  }
+
+  private async autoSave() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    if (!this.isSaved) {
+      await this.save();
+
+      this.isSaved = true;
+    }
+
+    this.timer = setTimeout(() => {
+      this.autoSave();
+    }, 5000);
   }
 }
