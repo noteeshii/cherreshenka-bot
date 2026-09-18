@@ -5,7 +5,7 @@ import { Bot } from '../bot.ts';
 import { Config } from '#extensions';
 import { testConfig } from './fixtures.ts';
 import Track from '#extensions/music/Track';
-import { Twitch, Logger, Storage } from '#extensions';
+import { Twitch, Logger, Storage, type Overlay } from '#extensions';
 
 function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?: Error) {
   const calls: unknown[][] = [];
@@ -14,7 +14,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
       sendMessage: async (...args: unknown[]) => {
         calls.push(['message', ...args]);
       },
-      announce: async (...args: unknown[]) => {
+      sendAnnounce: async (...args: unknown[]) => {
         calls.push(['announce', ...args]);
       },
       timeout: async (...args: unknown[]) => {
@@ -47,6 +47,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
     } as any,
     new Logger({ level: '' }),
     new Storage(),
+    {} as Overlay,
   );
   return { bot, calls };
 }
@@ -77,7 +78,7 @@ test('донат без сообщения отправляется в чат', 
     createdAt: '2026-09-13 12:00:00',
   });
 
-  assert.deepEqual(calls, [['message', 'Донат от Иван на сумму 500RUB']]);
+  assert.deepEqual(calls, [['announce', 'Донат от Иван на сумму 500RUB']]);
 });
 
 test('удаляет невидимые символы Streamer.bot с краёв аргумента', async () => {
@@ -102,11 +103,11 @@ test('транспорт передаёт реальные запросы API и
   } as unknown as Pick<StreamerbotClient, 'sendMessage' | 'doAction'>;
   const twitch = new Twitch(testConfig(), client);
   await twitch.sendMessage('hi');
-  await twitch.announce('news');
+  await twitch.sendAnnounce('news');
   await twitch.timeoutUser('@Viewer');
   assert.deepEqual(calls, [
     ['twitch', 'hi', { bot: true, internal: false }],
-    [{ name: 'SendAnnounce' }, { message: 'news', bot: true }],
+    [{ name: 'SendAnnounce' }, { message: 'news' }],
     [{ name: 'TimeoutUser' }, { userName: '@Viewer' }],
   ]);
   client.sendMessage = async () => ({ status: 'error' }) as never;
@@ -141,13 +142,14 @@ test('сообщение команды отправляется без ожид
 test('настройки читаются из изолированного окружения', (t) => {
   t.mock.property(process, 'env', {
     STREAMERBOT_URL: 'ws://localhost:8080/',
+    OVERLAY_URL: 'ws://localhost:17891/',
     TWITCH_CHANNEL_ID: '123',
     TWITCH_CHANNEL_NAME: 'Streamer',
     TWITCH_BOT_LOGIN: 'Bot',
     TWITCH_ACCESS_TOKEN: 'access-token',
     TWITCH_CLIENT_ID: 'client-id',
   });
-  assert.equal(Config.fromEnv().connection.port, 8080);
+  assert.equal(Config.fromEnv().streamerbot.connection.port, 8080);
   assert.deepEqual(Config.fromEnv().channel, {
     id: '123',
     name: 'streamer',

@@ -1,4 +1,14 @@
-import type { Music, Twitch, Config, Logger, Storage, Donation } from '#extensions';
+import type {
+  Music,
+  Twitch,
+  Config,
+  Logger,
+  Storage,
+  Donation,
+  Overlay,
+  StreamerChatMessage,
+  StreamerDeletedMessage,
+} from '#extensions';
 import {
   type Action,
   type RewardEvent,
@@ -36,13 +46,22 @@ export class Bot {
   private readonly config: Config;
   private readonly logger: Logger;
   private readonly storage: Storage;
+  private readonly overlay: Overlay;
 
-  constructor(twitch: Twitch, config: Config, music: Music, logger: Logger, storage: Storage) {
+  constructor(
+    twitch: Twitch,
+    config: Config,
+    music: Music,
+    logger: Logger,
+    storage: Storage,
+    overlay: Overlay,
+  ) {
     this.twitch = twitch;
     this.music = music;
     this.config = config;
     this.logger = logger;
     this.storage = storage;
+    this.overlay = overlay;
 
     this.actions = [
       new PauseCurrentTrack(),
@@ -61,6 +80,14 @@ export class Bot {
       new SendShootLeaders(),
       new SendDonateMessage(),
     ];
+  }
+
+  async onMessage(payload: StreamerChatMessage) {
+    this.overlay.onMessage(payload);
+  }
+
+  async onDeleteMessage(payload: StreamerDeletedMessage) {
+    this.overlay.onDeleteMessage(payload);
   }
 
   async onCommand(payload: CommandEvent) {

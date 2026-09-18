@@ -12,12 +12,20 @@ const parseConnectionUrl = (value: string): URL => {
 
 export namespace Config {
   export type Props = {
-    connection: {
-      scheme: string;
-      host: string;
-      port: number;
-      endpoint: string;
-      password: string;
+    streamerbot: {
+      connection: {
+        scheme: string;
+        host: string;
+        port: number;
+        endpoint: string;
+        password: string;
+      };
+    };
+    overlay: {
+      connection: {
+        host: string;
+        port: number;
+      };
     };
     logger: {
       level: string;
@@ -56,17 +64,26 @@ class Config {
   static fromEnv() {
     const { env } = process;
 
-    const url = parseConnectionUrl(String(env.STREAMERBOT_URL));
-    const defaultPort = url.protocol === 'wss:' ? 443 : 80;
-    return new Config({
-      connection: {
-        scheme: url.protocol.slice(0, -1),
-        host: url.hostname,
-        port: Number(url.port || defaultPort),
-        endpoint: url.pathname,
-        password: env.STREAMERBOT_PASSWORD || '',
-      },
+    const streamerbotUrl = parseConnectionUrl(String(env.STREAMERBOT_URL));
+    const overlayUrl = parseConnectionUrl(String(env.OVERLAY_URL));
+    const defaultPort = streamerbotUrl.protocol === 'wss:' ? 443 : 80;
 
+    return new Config({
+      streamerbot: {
+        connection: {
+          scheme: streamerbotUrl.protocol.slice(0, -1),
+          host: streamerbotUrl.hostname,
+          port: Number(streamerbotUrl.port ?? defaultPort),
+          endpoint: streamerbotUrl.pathname,
+          password: env.STREAMERBOT_PASSWORD || '',
+        },
+      },
+      overlay: {
+        connection: {
+          host: overlayUrl.hostname,
+          port: Number(overlayUrl.port ?? defaultPort),
+        },
+      },
       channel: {
         id: String(env.TWITCH_CHANNEL_ID ?? ''),
         name: (env.TWITCH_CHANNEL_NAME ?? '').toLowerCase(),
@@ -99,8 +116,11 @@ class Config {
     });
   }
 
-  get connection() {
-    return this.props.connection;
+  get streamerbot() {
+    return this.props.streamerbot;
+  }
+  get overlay() {
+    return this.props.overlay;
   }
   get logger() {
     return this.props.logger;

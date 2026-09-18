@@ -4,7 +4,10 @@ export function testConfig(
   overrides: Partial<ConstructorParameters<typeof Config>[0]> = {},
 ): Config {
   return new Config({
-    connection: { scheme: 'ws', host: '127.0.0.1', port: 8080, endpoint: '/', password: '' },
+    streamerbot: {
+      connection: { scheme: 'ws', host: '127.0.0.1', port: 8080, endpoint: '/', password: '' },
+    },
+    overlay: { connection: { host: '127.0.0.1', port: 17891 } },
     logger: { level: 'all' },
     channel: {
       id: '123',
