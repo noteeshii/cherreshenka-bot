@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { StreamerbotEventData, StreamerbotClient } from '@streamerbot/client';
+import type { StreamerbotClient } from '@streamerbot/client';
 import { Bot } from '../bot.ts';
 import { Config } from '#extensions';
 import { testConfig } from './fixtures.ts';
 import Track from '#extensions/music/Track';
-import { Twitch, Logger, Storage, type Overlay } from '#extensions';
+import { Twitch, Logger, Storage, type Overlay, type RewardRedemption } from '#extensions';
 
 function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?: Error) {
   const calls: unknown[][] = [];
@@ -47,7 +47,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
     } as any,
     new Logger({ level: '' }),
     new Storage(),
-    {} as Overlay,
+    { onMessage: () => undefined, onDeleteMessage: () => undefined } as unknown as Overlay,
   );
   return { bot, calls };
 }
@@ -191,8 +191,16 @@ test('ошибка асинхронного заказа возвращаетс�
     id: 'failed-order',
     user_input: 'https://youtu.be/dQw4w9WgXcQ',
     user_login: 'viewer',
-    reward: { id: 'reward', title: 'Музыка' },
-  } as StreamerbotEventData<'Twitch.RewardRedemption'>);
+    user_name: 'viewer',
+    status: 'unfulfilled',
+    reward: { id: 'reward', title: 'Музыка', cost: 50, prompt: '' },
+    redeemed_at: '2026-09-19T07:17:23.140839Z',
+    broadcaster_user_id: '123',
+    broadcaster_user_login: 'streamer',
+    broadcaster_user_name: 'streamer',
+    message_timestamp: '2026-09-19T07:17:23.3265475Z',
+    is_test: false,
+  } as RewardRedemption);
   assert.deepEqual(calls, [
     ['message', '@viewer, Не удалось добавить трек.'],
     ['redemption-status', 'failed-order', 'reward', 'CANCELED'],

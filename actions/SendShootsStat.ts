@@ -1,4 +1,4 @@
-import type { Context, Action, CommandEvent, UserStorage } from './types.ts';
+import type { Context, Action, CommandEvent, PermanentUserStorage } from './types.ts';
 
 export default class SendShootsStat implements Action {
   private get name() {
@@ -10,7 +10,7 @@ export default class SendShootsStat implements Action {
   }
 
   public async run({ user }: CommandEvent, { twitch, storage }: Context) {
-    const userStorage = storage.getUserPermanent<UserStorage>(user.name);
+    const userStorage = storage.getUserPermanent<PermanentUserStorage>(user.name);
 
     const kd = ((userStorage.killsCount || 0) / (userStorage.deathsCount || 1)).toFixed(2);
     const hitsPercent = Math.floor(

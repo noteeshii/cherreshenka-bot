@@ -41,7 +41,9 @@ export namespace Config {
       accessToken: string;
     };
     rewards: {
-      musicRewardId: string;
+      musicId: string;
+      pinnedStickerId: string;
+      basicStickerId: string;
     };
     music: {
       mpvPath: string;
@@ -97,7 +99,9 @@ class Config {
       },
 
       rewards: {
-        musicRewardId: env.MUSIC_REWARD_ID ?? '',
+        musicId: env.REWARDS_MUSIC_ID ?? '',
+        pinnedStickerId: env.REWARDS_PINNED_STICKER_ID ?? '',
+        basicStickerId: env.REWARDS_BASIC_STICKER_ID ?? '',
       },
 
       music: {

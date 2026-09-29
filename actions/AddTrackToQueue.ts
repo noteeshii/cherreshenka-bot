@@ -9,7 +9,7 @@ export default class AddTrackToQueue implements Action {
   private readonly rewardId;
 
   constructor(config: Config) {
-    this.rewardId = config.rewards.musicRewardId;
+    this.rewardId = config.rewards.musicId;
   }
 
   public check(rewardId: string) {
@@ -18,12 +18,14 @@ export default class AddTrackToQueue implements Action {
 
   public async run(reward: RewardEvent, { music, twitch }: Context) {
     try {
-      await music.enqueue({
+      const { id, track } = await music.enqueue({
         url: reward.user_input,
         userName: reward.user_login,
         rewardId: reward.reward.id,
         redemptionId: reward.id,
       });
+
+      await twitch.sendMessage(`Трек добавлен в очередь: #${id} ${track.title}`);
     } catch (error) {
       await twitch.sendMessage(`@${reward.user_login}, Не удалось добавить трек.`);
       await twitch.updateRedemptionStatus(reward.id, reward.reward.id, 'CANCELED');

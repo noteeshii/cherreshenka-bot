@@ -2,7 +2,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 import type Logger from '../logger.ts';
 import { prepareMessage } from './incoming.ts';
-import type { StreamerChatMessage, StreamerDeletedMessage } from './incoming.ts';
+import type { PreparedMessage, StreamerChatMessage, StreamerDeletedMessage } from './incoming.ts';
 import { ProfileStore } from './ProfileStore.ts';
 import { StickerBoard } from './StickerBoard.ts';
 import type {
@@ -16,11 +16,12 @@ import type {
   UserRole,
 } from './types.ts';
 
-// Награда канала, стикер от которой закрепляется на 10 минут в режиме наград
-// (обычная — f34391e1-6624-4239-9ab8-99ee935728f3). Событие Twitch.ChatMessage
-// от Streamer.bot не передаёт идентификатор награды, поэтому закрепление пока
-// не срабатывает и заработает, когда id появится в событии.
-const PINNED_REWARD_ID = '43c13c5b-dc6b-4b03-993f-e2321e663734';
+// Награды канала, создающие стикеры: обычная и закрепляемая на 10 минут в режиме наград.
+// Стикеры создаются событием Twitch.RewardRedemption, где известен id выкупленной награды.
+const DEFAULT_REWARDS = {
+  basicStickerId: 'f34391e1-6624-4239-9ab8-99ee935728f3',
+  pinnedStickerId: '43c13c5b-dc6b-4b03-993f-e2321e663734',
+} as const;
 const PINNED_REWARD_LIFETIME_MS = 10 * 60 * 1000;
 
 const DEFAULT_HOST = '127.0.0.1';
@@ -38,6 +39,8 @@ type SessionClient = WebSocket & { role: string; profileId: string | null };
 export type OverlayOptions = {
   /** Адрес, на котором слушает сервер синхронизации. */
   connection?: { host?: string; port?: number };
+  /** Идентификаторы наград-стикеров; по умолчанию — награды канала. */
+  rewards?: { basicStickerId?: string; pinnedStickerId?: string };
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -91,16 +94,25 @@ const parseClientMessage = (raw: unknown): ClientMessage => {
   }
 };
 
+type Props = {
+  isPinned: boolean;
+  isReward: boolean;
+};
+
 /** WebSocket-сервер синхронизации стикеров между настройками и оверлеем OBS. */
 export default class Overlay {
   private readonly logger: Logger;
   private readonly store: ProfileStore;
   private readonly demoCounters = new Map<string, number>();
   private readonly server: WebSocketServer;
+  private readonly basicRewardId: string;
+  private readonly pinnedRewardId: string;
   private listening = false;
 
   constructor(options: OverlayOptions, logger: Logger) {
     this.logger = logger;
+    this.basicRewardId = options.rewards?.basicStickerId || DEFAULT_REWARDS.basicStickerId;
+    this.pinnedRewardId = options.rewards?.pinnedStickerId || DEFAULT_REWARDS.pinnedStickerId;
     this.store = new ProfileStore(
       (profile) =>
         new StickerBoard({
@@ -154,28 +166,40 @@ export default class Overlay {
   }
 
   /** Добавляет стикер с сообщением чата; вызывается при новом сообщении в чате. */
-  public onMessage(payload: StreamerChatMessage): void {
-    const prepared = prepareMessage(payload);
-    const channel = payload.broadcaster.login.toLowerCase();
+  public onMessage(payload: StreamerChatMessage, { isPinned, isReward }: Props): void {
+    // Награды создаются событием RewardRedemption, где известен id награды.
+    if (payload.meta.isCustomReward) return;
+    this.addPrepared(
+      payload.broadcaster.login.toLowerCase(),
+      payload.messageId,
+      prepareMessage(payload, isReward, isPinned),
+    );
+  }
 
+  /** Показывает подготовленное сообщение профилям канала в подходящем режиме. */
+  private addPrepared(channel: string, messageId: string, prepared: PreparedMessage): void {
     for (const profile of this.store.findByChannel(channel)) {
       const { rewardMode } = profile.settings;
       // В режиме наград показываем только выкупленные награды, иначе — только обычные сообщения.
       if (rewardMode !== prepared.isReward) continue;
 
-      const pinned = prepared.rewardId === PINNED_REWARD_ID;
       const board = this.store.board(profile);
-      if (pinned) board.removeByCustomRewardId(PINNED_REWARD_ID);
+      // Повторный выкуп закрепляемой награды снимает прежний закреплённый стикер.
+      if (prepared.isPinned && prepared.isReward) board.removeByCustomRewardId(this.pinnedRewardId);
       board.add({
-        messageId: payload.messageId,
+        messageId,
         author: prepared.author,
         text: prepared.text,
         content: prepared.content,
         roles: prepared.roles,
-        pinned,
-        customRewardId: rewardMode ? prepared.rewardId : null,
-        lifetimeMs: pinned ? PINNED_REWARD_LIFETIME_MS : undefined,
-        forceExpiry: pinned,
+        pinned: prepared.isPinned,
+        customRewardId: rewardMode
+          ? prepared.isPinned
+            ? this.pinnedRewardId
+            : this.basicRewardId
+          : null,
+        lifetimeMs: prepared.isPinned ? PINNED_REWARD_LIFETIME_MS : undefined,
+        forceExpiry: prepared.isPinned,
       });
     }
   }

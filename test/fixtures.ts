@@ -17,7 +17,7 @@ export function testConfig(
       clientId: 'client-id',
     },
     donates: { accessToken: 'donation-alerts-access-token' },
-    rewards: { musicRewardId: 'reward' },
+    rewards: { musicId: 'reward', pinnedStickerId: '', basicStickerId: '' },
     music: { mpvPath: 'mpv', ytDlpPath: 'yt-dlp', yandexMusicToken: '' },
     actions: { hitChance: 6 },
     ...overrides,

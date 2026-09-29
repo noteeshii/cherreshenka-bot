@@ -1,7 +1,7 @@
 import type { Config } from '#extensions';
 import { getRandomNumber } from '#utils';
 
-import type { Context, Action, CommandEvent, UserStorage } from './types.ts';
+import type { Context, Action, CommandEvent, PermanentUserStorage } from './types.ts';
 
 export default class ShootUser implements Action {
   private readonly chance: number;
@@ -24,7 +24,7 @@ export default class ShootUser implements Action {
       : (targetUserName?.toLowerCase().trim() ?? null);
 
     const isHit = randomNumber === this.chance;
-    const userStorage = storage.getUserPermanent<UserStorage>(user.name);
+    const userStorage = storage.getUserPermanent<PermanentUserStorage>(user.name);
 
     if (!parsed || !parsed.length || parsed === user.name) {
       userStorage.shootsSelfCount = (userStorage.shootsSelfCount || 0) + 1;
@@ -66,7 +66,7 @@ export default class ShootUser implements Action {
       return;
     }
 
-    const targetStorage = storage.getUserPermanent<UserStorage>(parsed);
+    const targetStorage = storage.getUserPermanent<PermanentUserStorage>(parsed);
 
     if (isHit) {
       userStorage.killsCount = (userStorage.killsCount || 0) + 1;

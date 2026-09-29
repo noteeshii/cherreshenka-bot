@@ -8,10 +8,10 @@ import type {
   Overlay,
   StreamerChatMessage,
   StreamerDeletedMessage,
+  RewardRedemption,
 } from '#extensions';
 import {
   type Action,
-  type RewardEvent,
   type CommandEvent,
   PauseCurrentTrack,
   ResumeCurrentTrack,
@@ -28,6 +28,9 @@ import {
   SendShootsStat,
   SendShootLeaders,
   SendDonateMessage,
+  RedeemBasicSticker,
+  RedeemPinnedSticker,
+  SendStickerToOverlay,
 } from '#actions';
 
 // Streamer.bot may pass Unicode format characters (for example U+034F) after
@@ -79,11 +82,34 @@ export class Bot {
       new SendShootsStat(),
       new SendShootLeaders(),
       new SendDonateMessage(),
+      new RedeemBasicSticker(this.config),
+      new RedeemPinnedSticker(this.config),
+      new SendStickerToOverlay(),
     ];
   }
 
   async onMessage(payload: StreamerChatMessage) {
-    this.overlay.onMessage(payload);
+    const messageLogger = this.logger.withContext('Message');
+
+    messageLogger.debug(`Starting: SendStickerToOverlay`);
+
+    const action = this.actions.find((action) => action.check('SendStickerToOverlay'));
+
+    if (!action) {
+      messageLogger.debug(`Action not found: SendStickerToOverlay`);
+
+      return;
+    }
+
+    await action.run(payload, {
+      twitch: this.twitch,
+      music: this.music,
+      logger: messageLogger,
+      storage: this.storage,
+      overlay: this.overlay,
+    });
+
+    messageLogger.debug(`Completed: SendStickerToOverlay`);
   }
 
   async onDeleteMessage(payload: StreamerDeletedMessage) {
@@ -110,13 +136,14 @@ export class Bot {
         music: this.music,
         logger: commandLogger,
         storage: this.storage,
+        overlay: this.overlay,
       },
     );
 
     commandLogger.debug(`Completed: ${payload.name}`);
   }
 
-  async onReward(reward: RewardEvent): Promise<void> {
+  async onReward(reward: RewardRedemption): Promise<void> {
     const rewardLogger = this.logger.withContext('Reward');
 
     rewardLogger.debug(`Starting action: ${reward.reward.title}`);
@@ -140,6 +167,7 @@ export class Bot {
       music: this.music,
       logger: rewardLogger,
       storage: this.storage,
+      overlay: this.overlay,
     });
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
@@ -163,6 +191,7 @@ export class Bot {
       music: this.music,
       logger: donateLogger,
       storage: this.storage,
+      overlay: this.overlay,
     });
 
     donateLogger.debug(`Completed: SendDonateMessage`);

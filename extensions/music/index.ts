@@ -3,6 +3,7 @@ import type { Config, Logger } from '#extensions';
 import Track, { type TrackProps } from './Track.ts';
 import TrackResolver from './TrackResolver.ts';
 import AudioPlayer from './Player.ts';
+import type User from '#extensions/twitch/User.ts';
 
 export default class Music {
   private readonly config: Config;
@@ -39,6 +40,8 @@ export default class Music {
 
     this.waiting.push(track);
     this.startWorker();
+
+    return { id: this.queuedTracks.length, track };
   }
 
   public pause(): Promise<void> {
@@ -81,13 +84,13 @@ export default class Music {
     return track;
   }
 
-  public cancel(userName: string, idx: number) {
+  public cancel({ name, isModerator }: User, idx: number) {
     const track = this.waiting.at(idx);
 
     if (!track) {
       return;
     }
-    if (track.userName !== userName) {
+    if (!isModerator || track.userName !== name) {
       throw 'permission denied';
     }
 

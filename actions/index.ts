@@ -13,4 +13,7 @@ export { default as ShootUser } from './ShootUser.ts';
 export { default as SendShootsStat } from './SendShootsStat.ts';
 export { default as SendShootLeaders } from './SendShootLeaders.ts';
 export { default as SendDonateMessage } from './SendDonateMessage.ts';
+export { default as RedeemBasicSticker } from './RedeemBasicSticker.ts';
+export { default as RedeemPinnedSticker } from './RedeemPinnedSticker.ts';
+export { default as SendStickerToOverlay } from './SendStickerToOverlay.ts';
 export type { Action, RewardEvent, CommandEvent } from './types.ts';

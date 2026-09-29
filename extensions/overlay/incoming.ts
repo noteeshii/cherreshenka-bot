@@ -1,4 +1,15 @@
+import type { StreamerbotEventPayload } from '@streamerbot/client';
 import type { MessageFragment, UserRole } from './types.ts';
+
+/** Выкуп награды канала в формате события Streamer.bot Twitch.RewardRedemption.
+ * Библиотечный тип не знает о полях Broadcaster — дополняем их из реального payload. */
+export type RewardRedemption = StreamerbotEventPayload<'Twitch.RewardRedemption'>['data'] & {
+  broadcaster_user_id: string;
+  broadcaster_user_login: string;
+  broadcaster_user_name: string;
+  message_timestamp: string;
+  is_test: boolean;
+};
 
 /** Эмоут в списке эмоутов сообщения от Streamer.bot. */
 export type StreamerChatEmote = {
@@ -100,7 +111,7 @@ export type PreparedMessage = {
   text: string;
   content: MessageFragment[];
   roles: UserRole[];
-  rewardId: string | null;
+  isPinned: boolean;
   isReward: boolean;
 };
 
@@ -173,8 +184,12 @@ const deriveRoles = (payload: StreamerChatMessage): UserRole[] => {
   return roles;
 };
 
-/** Разбирает сообщение Streamer.bot: фрагменты, роли и признак награды. */
-export const prepareMessage = (payload: StreamerChatMessage): PreparedMessage => {
+/** Разбирает сообщение чата или выкуп награды Streamer.bot: фрагменты, роли, признак награды. */
+export const prepareMessage = (
+  payload: StreamerChatMessage,
+  isReward: boolean,
+  isPinned: boolean,
+): PreparedMessage => {
   // Идентификаторы эмоутов Streamer.bot отдаёт отдельным списком, parts — без них.
   const ids = new Map(payload.emotes.map((emote) => [emote.name, emote.id]));
   return {
@@ -182,7 +197,7 @@ export const prepareMessage = (payload: StreamerChatMessage): PreparedMessage =>
     text: payload.text,
     content: toContent(payload.parts, ids),
     roles: deriveRoles(payload),
-    rewardId: null,
-    isReward: payload.meta.isCustomReward,
+    isPinned,
+    isReward,
   };
 };

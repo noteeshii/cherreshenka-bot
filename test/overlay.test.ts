@@ -72,6 +72,50 @@ const CHAT_MESSAGE: StreamerChatMessage = {
   createdAt: '2026-09-18T12:32:16.944931Z',
 };
 
+/** Сообщение автора, выкупившего награду: текст с эмоутами 7TV и Twitch. */
+const REWARD_MESSAGE: StreamerChatMessage = {
+  ...CHAT_MESSAGE,
+  user: { ...CHAT_MESSAGE.user, id: 'user-two', login: 'noteeshii', name: 'noteeshii' },
+  messageId: 'message-reward',
+  text: '12313 xdd cherry444Flash',
+  emotes: [
+    {
+      id: '7tv-xdd',
+      type: '7TVChannel',
+      name: 'xdd',
+      startIndex: 6,
+      endIndex: 8,
+      imageUrl: 'https://cdn.7tv.app/emote/7tv-xdd/2x.webp',
+    },
+    {
+      id: '555',
+      type: 'Twitch',
+      name: 'cherry444Flash',
+      startIndex: 10,
+      endIndex: 23,
+      imageUrl: 'https://static-cdn.jtvnw.net/emoticons/v2/555/default/light/2.0',
+    },
+  ],
+  parts: [
+    { type: 'text', text: '12313 ' },
+    {
+      type: 'emote',
+      text: 'xdd',
+      source: '7TVChannel',
+      imageUrl: 'https://cdn.7tv.app/emote/7tv-xdd/2x.webp',
+      zeroWidth: false,
+    },
+    { type: 'text', text: ' ' },
+    {
+      type: 'emote',
+      text: 'cherry444Flash',
+      source: 'Twitch',
+      imageUrl: 'https://static-cdn.jtvnw.net/emoticons/v2/555/default/light/2.0',
+      zeroWidth: false,
+    },
+  ],
+};
+
 type StickersMessage = Extract<ServerMessage, { type: 'stickers' }>;
 
 /** Клиент оверлея: подключается, здоровается и собирает все входящие сообщения. */
@@ -87,13 +131,11 @@ class TestClient {
   }
 
   static connect(url: string, hello: unknown): Promise<TestClient> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const socket = new WebSocket(url);
-      const client = new TestClient(socket);
-      socket.once('error', reject);
       socket.once('open', () => {
         socket.send(JSON.stringify(hello));
-        resolve(client);
+        resolve(new TestClient(socket));
       });
     });
   }
@@ -144,6 +186,103 @@ const waitUntil = async (condition: () => boolean, timeoutMs = 5000): Promise<vo
   }
 };
 
+test('награда создаёт стикер с эмоутами, а повторный выкуп закрепляет его', async (t) => {
+  const overlay = new Overlay(
+    {
+      connection: { host: HOST, port: 0 },
+      rewards: { basicStickerId: 'reward-basic', pinnedStickerId: 'reward-pinned' },
+    },
+    new Logger({ level: '' }),
+  );
+  await overlay.open();
+  t.after(async () => {
+    await overlay.close();
+  });
+
+  const rewards = await TestClient.connect(`ws://${HOST}:${overlay.port}`, hello('rewards', true));
+  const regular = await TestClient.connect(`ws://${HOST}:${overlay.port}`, hello('chat', false));
+  await waitUntil(() => rewards.messages.some((message) => message.type === 'profile'));
+  await waitUntil(() => regular.messages.some((message) => message.type === 'profile'));
+
+  // Сообщение-уведомление о награде (isCustomReward) никогда не становится стикером.
+  overlay.onMessage(
+    { ...REWARD_MESSAGE, meta: { ...REWARD_MESSAGE.meta, isCustomReward: true } },
+    { isPinned: true, isReward: true },
+  );
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.equal(lastStickers(rewards, 'rewards')?.stickers.length, 0);
+  assert.equal(lastStickers(regular, 'chat')?.stickers.length, 0);
+
+  // Выкуп обычной награды помечает сообщение как награду.
+  overlay.onMessage(REWARD_MESSAGE, { isPinned: false, isReward: true });
+  await waitUntil(() => lastStickers(rewards, 'rewards')?.stickers.length === 1);
+  assert.equal(lastStickers(regular, 'chat')?.stickers.length, 0);
+  const sticker = lastStickers(rewards, 'rewards')!.stickers[0];
+  assert.equal(sticker.syncId, 'rewards:message-reward');
+  assert.equal(sticker.author, 'noteeshii');
+  assert.equal(sticker.text, '12313 xdd cherry444Flash');
+  assert.equal(sticker.pinned, false);
+  assert.equal(sticker.customRewardId, 'reward-basic');
+  assert.deepEqual(sticker.content, [
+    { type: 'text', text: '12313 ' },
+    {
+      type: 'emote',
+      provider: '7tv',
+      id: '7tv-xdd',
+      code: 'xdd',
+      url: 'https://cdn.7tv.app/emote/7tv-xdd/2x.webp',
+    },
+    { type: 'text', text: ' ' },
+    {
+      type: 'emote',
+      provider: 'twitch',
+      id: '555',
+      code: 'cherry444Flash',
+      url: 'https://static-cdn.jtvnw.net/emoticons/v2/555/default/light/2.0',
+    },
+  ]);
+
+  // Обычное сообщение не попадает в профиль режима наград.
+  overlay.onMessage(CHAT_MESSAGE, { isPinned: false, isReward: false });
+  await waitUntil(() => lastStickers(regular, 'chat')?.stickers.length === 1);
+  assert.equal(lastStickers(rewards, 'rewards')?.stickers.length, 1);
+
+  // Выкуп закрепляемой награды закрепляет стикер на 10 минут.
+  overlay.onMessage(
+    { ...REWARD_MESSAGE, messageId: 'message-pinned-one' },
+    { isPinned: true, isReward: true },
+  );
+  await waitUntil(
+    () =>
+      lastStickers(rewards, 'rewards')?.stickers.some(
+        (item) => item.syncId === 'rewards:message-pinned-one',
+      ) === true,
+  );
+  const pinnedSticker = lastStickers(rewards, 'rewards')!.stickers.find(
+    (item) => item.syncId === 'rewards:message-pinned-one',
+  );
+  assert.equal(pinnedSticker?.pinned, true);
+  assert.equal(pinnedSticker?.customRewardId, 'reward-pinned');
+
+  // Повторный выкуп снимает прежний закреплённый стикер и закрепляет новый.
+  overlay.onMessage(
+    { ...REWARD_MESSAGE, messageId: 'message-pinned-two' },
+    { isPinned: true, isReward: true },
+  );
+  await waitUntil(
+    () =>
+      lastStickers(rewards, 'rewards')?.stickers.some(
+        (item) => item.syncId === 'rewards:message-pinned-two',
+      ) === true,
+  );
+  const stickers = lastStickers(rewards, 'rewards')!.stickers;
+  assert.equal(stickers.length, 2);
+  assert.equal(
+    stickers.find((item) => item.customRewardId === 'reward-pinned')?.syncId,
+    'rewards:message-pinned-two',
+  );
+});
+
 test('стикеры синхронизируются между клиентами одного профиля', async (t) => {
   const overlay = new Overlay({ connection: { host: HOST, port: 0 } }, new Logger({ level: '' }));
   await overlay.open();
@@ -160,7 +299,7 @@ test('стикеры синхронизируются между клиента�
   await waitUntil(() => chatSecond.messages.some((message) => message.type === 'profile'));
   await waitUntil(() => rewards.messages.some((message) => message.type === 'profile'));
 
-  overlay.onMessage(CHAT_MESSAGE);
+  overlay.onMessage(CHAT_MESSAGE, { isPinned: false, isReward: false });
 
   await waitUntil(() => lastStickers(chatFirst, 'chat')?.stickers.length === 1);
   await waitUntil(() => lastStickers(chatSecond, 'chat')?.stickers.length === 1);

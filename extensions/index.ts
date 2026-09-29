@@ -11,4 +11,5 @@ export type {
   Sticker,
   StreamerChatMessage,
   StreamerDeletedMessage,
+  RewardRedemption,
 } from './overlay/index.ts';

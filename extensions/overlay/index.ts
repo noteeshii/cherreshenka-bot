@@ -1,6 +1,6 @@
 export { default } from './Overlay.ts';
 export { default as Overlay, type OverlayOptions } from './Overlay.ts';
-export type { StreamerChatMessage, StreamerDeletedMessage } from './incoming.ts';
+export type { RewardRedemption, StreamerChatMessage, StreamerDeletedMessage } from './incoming.ts';
 export type { ClientMessage, ServerMessage } from './types.ts';
 export type {
   ConnectionStatus,

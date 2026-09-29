@@ -1,6 +1,5 @@
 import { StreamerbotClient } from '@streamerbot/client';
 
-import { checkMusicDependencies } from '#extensions/music/dependencies.ts';
 import {
   Config,
   Logger,
@@ -10,7 +9,9 @@ import {
   DonationAlerts,
   Overlay,
   type StreamerChatMessage,
+  type RewardRedemption,
 } from '#extensions';
+import { checkMusicDependencies } from '#extensions/music/dependencies.ts';
 
 import { Bot } from './bot.ts';
 import { checkChatConnection } from './chat-connection.ts';
@@ -52,7 +53,10 @@ const storage = new Storage();
 await storage.open();
 
 const overlay = new Overlay(
-  { connection: config.overlay.connection },
+  {
+    connection: config.overlay.connection,
+    rewards: config.rewards,
+  },
   logger.withContext('Overlay'),
 );
 
@@ -78,7 +82,7 @@ client.on('Command.Triggered', ({ data }) => {
 });
 
 client.on('Twitch.RewardRedemption', ({ data }) => {
-  bot.onReward(data).catch(socketLogger.error.bind(socketLogger));
+  bot.onReward(data as unknown as RewardRedemption).catch(socketLogger.error.bind(socketLogger));
 });
 
 donationAlerts.onDonate((donate) => {

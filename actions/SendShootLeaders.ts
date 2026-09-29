@@ -1,4 +1,4 @@
-import type { Context, Action, CommandEvent, UserStorage } from './types.ts';
+import type { Context, Action, CommandEvent, PermanentUserStorage } from './types.ts';
 
 export default class SendShootLeaders implements Action {
   private get name() {
@@ -12,7 +12,7 @@ export default class SendShootLeaders implements Action {
   public async run(_args: CommandEvent, { twitch, storage }: Context) {
     const userStorage = storage.getPermanent();
 
-    const leaders = Object.entries<UserStorage>(userStorage.users)
+    const leaders = Object.entries<PermanentUserStorage>(userStorage.users)
       .map(([name, node]) => {
         return {
           name,
