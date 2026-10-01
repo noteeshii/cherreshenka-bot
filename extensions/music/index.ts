@@ -90,7 +90,7 @@ export default class Music {
     if (!track) {
       return;
     }
-    if (!isModerator || track.userName !== name) {
+    if (track.userName !== name && !isModerator) {
       throw 'permission denied';
     }
 

@@ -13,6 +13,7 @@ type HelixResponse<T> = {
 };
 
 export type TwitchApiOptions = {
+  channelName: string;
   clientId: string;
   accessToken: string;
   broadcasterId: string;
@@ -27,12 +28,14 @@ export default class TwitchApi {
   private readonly broadcasterId: string;
   private readonly clientId: string;
   private readonly fetch: Fetch;
+  private readonly channelName: string;
 
   constructor(options: TwitchApiOptions) {
     this.clientId = options.clientId;
     this.accessToken = options.accessToken;
     this.broadcasterId = options.broadcasterId;
     this.fetch = options.fetch ?? globalThis.fetch;
+    this.channelName = options.channelName;
   }
 
   public async getUser(login: string) {
@@ -63,7 +66,7 @@ export default class TwitchApi {
 
   private async createUser(user: TwitchUser) {
     const [isModerator, isSubscribed, isVip, isFollowing] = await Promise.all([
-      this.isModerator(user.id),
+      user.login === this.channelName ? true : this.isModerator(user.id),
       this.isSubscribed(user.id),
       this.isVip(user.id),
       this.isFollowing(user.id),

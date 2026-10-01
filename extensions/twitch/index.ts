@@ -32,6 +32,7 @@ export default class Twitch {
       accessToken: this.config.channel.accessToken,
       broadcasterId: this.config.channel.id,
       clientId: this.config.channel.clientId,
+      channelName: this.config.channel.name,
     });
   }
 
