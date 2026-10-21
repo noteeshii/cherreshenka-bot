@@ -2,6 +2,8 @@ export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
 export type StickerEffect = 'none' | 'foil' | 'holographic' | 'polychrome' | 'gold';
 
+export type OverlayTheme = 'default' | 'halloween' | 'new_year';
+
 export type UserRole = 'channelOwner' | 'moderator' | 'vip' | 'subscriber' | 'follower';
 
 export type Sticker = {
@@ -42,6 +44,7 @@ export type OverlaySettings = {
   safeBottom: number;
   safeLeft: number;
   safeAreaExcluded: boolean;
+  theme: OverlayTheme;
 };
 
 export type OverlayProfile = {

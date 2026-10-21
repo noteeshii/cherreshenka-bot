@@ -6,6 +6,7 @@ export type {
   ConnectionStatus,
   MessageFragment,
   OverlaySettings,
+  OverlayTheme,
   Profile,
   ProfilePayload,
   ProfileSummary,

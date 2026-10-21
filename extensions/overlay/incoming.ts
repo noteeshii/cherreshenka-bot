@@ -159,6 +159,7 @@ const toContent = (parts: StreamerChatPart[], ids: Map<string, string>): Message
   return content;
 };
 
+// TODO: Если пользователь ВИП, у него появляется значек модера, а у модера появлется ВИП
 /** Переводит роль и значки Streamer.bot в роли, понятные оверлею. */
 const deriveRoles = (payload: StreamerChatMessage): UserRole[] => {
   const badges = payload.user.badges.map((badge) => badge.name);

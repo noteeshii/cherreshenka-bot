@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue';
 import { defineStore } from 'pinia';
-import type { ConnectionStatus, OverlayProfile, Sticker } from '../types';
+import type { ConnectionStatus, OverlayProfile, OverlayTheme, Sticker } from '../types';
 
 type SyncedSettings = OverlayProfile['settings'];
 
@@ -8,6 +8,10 @@ type StickerSyncAction =
   | { action: 'pin'; stickerId: string; pinned: boolean }
   | { action: 'move'; stickerId: string; x: number; y: number }
   | { action: 'remove'; stickerId: string };
+
+function normalizeTheme(value: unknown): OverlayTheme {
+  return value === 'halloween' || value === 'new_year' || value === 'default' ? value : 'default';
+}
 
 function createProfileId() {
   return (
@@ -36,6 +40,9 @@ export const useChatStickersStore = defineStore('chat-stickers', () => {
   const urlUpdatedAt = Number(params.get('profileUpdatedAt')) || 0;
   const useStoredProfile = storedProfile && storedProfile.updatedAt > urlUpdatedAt;
   const sourceProfile = useStoredProfile ? storedProfile : null;
+  const theme = ref<OverlayTheme>(
+    normalizeTheme(sourceProfile ? sourceProfile.settings?.theme : params.get('theme')),
+  );
   const legacySafeHorizontal = Number(
     params.get('safeX') || localStorage.getItem('sticker-safe-horizontal') || 8,
   );
@@ -148,6 +155,7 @@ export const useChatStickersStore = defineStore('chat-stickers', () => {
       safeBottom: String(safeBottom.value),
       safeLeft: String(safeLeft.value),
       safeMode: safeAreaExcluded.value ? 'exclude' : 'contain',
+      theme: theme.value,
     });
     return `${pageUrl}?${overlayParams.toString()}`;
   });
@@ -162,6 +170,7 @@ export const useChatStickersStore = defineStore('chat-stickers', () => {
       safeBottom: safeBottom.value,
       safeLeft: safeLeft.value,
       safeAreaExcluded: safeAreaExcluded.value,
+      theme: theme.value,
     };
   }
 
@@ -211,6 +220,7 @@ export const useChatStickersStore = defineStore('chat-stickers', () => {
     safeBottom.value = profile.settings.safeBottom;
     safeLeft.value = profile.settings.safeLeft;
     safeAreaExcluded.value = profile.settings.safeAreaExcluded;
+    theme.value = normalizeTheme(profile.settings?.theme);
     applyingRemoteProfile = false;
     persistProfile();
   }
@@ -359,6 +369,7 @@ export const useChatStickersStore = defineStore('chat-stickers', () => {
       safeBottom,
       safeLeft,
       safeAreaExcluded,
+      theme,
     ],
     () => {
       if (applyingRemoteProfile) return;
@@ -382,6 +393,7 @@ export const useChatStickersStore = defineStore('chat-stickers', () => {
     safeBottom,
     safeLeft,
     safeAreaExcluded,
+    theme,
     syncStatus,
     status,
     stickers,

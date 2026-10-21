@@ -1177,6 +1177,7 @@ label output {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 5;
+  line-clamp: 5;
 }
 
 .message-emote {
@@ -1625,5 +1626,143 @@ footer {
   .horizontal-controls .connection-states {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+.theme-picker {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid #aaa99f;
+  padding: 22px 24px;
+  background: transparent;
+}
+.theme-picker legend {
+  padding: 0;
+  color: #171713;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+.theme-picker > p {
+  margin: 3px 0 16px;
+  color: #77756c;
+  font-size: 12px;
+}
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.theme-option {
+  position: relative;
+  display: flex;
+  min-height: 68px;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #aaa99f;
+  padding: 14px;
+  background: #fffef8;
+  cursor: pointer;
+}
+.theme-option:hover:not(.disabled),
+.theme-option:has(input:checked) {
+  border-color: #6a28ff;
+  background: #e9ddff;
+}
+.theme-option.disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+.theme-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.theme-option:has(input:focus-visible) {
+  outline: 2px solid #6a28ff;
+  outline-offset: 2px;
+}
+.theme-option-indicator {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+  border: 2px solid #aaa99f;
+  border-radius: 50%;
+}
+.theme-option:has(input:checked) .theme-option-indicator {
+  border-color: #6a28ff;
+  box-shadow:
+    inset 0 0 0 3px #e9ddff,
+    inset 0 0 0 8px #6a28ff;
+}
+.theme-option-copy {
+  display: grid;
+  gap: 4px;
+}
+.theme-option-copy b {
+  font-size: 13px;
+}
+.theme-option-copy small {
+  color: #77756c;
+  font-size: 11px;
+}
+.theme-option em {
+  margin-left: auto;
+  color: #6a28ff;
+  font: 500 9px 'DM Mono';
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 800px) {
+  .theme-picker {
+    padding: 20px;
+  }
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app[data-theme='halloween'] {
+  .sticker .tape {
+    overflow: visible;
+    clip-path: none;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .sticker .tape::before {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    top: -70%;
+    left: -62.5%;
+    width: 225%;
+    height: 225%;
+    background: url('./assets/spider-web.svg') center / contain no-repeat;
+    filter: invert(1);
+    pointer-events: none;
+  }
+
+  .sticker .tape::after,
+  .sticker .tape--clear::after {
+    display: none;
+  }
+
+  .sticker .tape--pinned-top::before {
+    transform: translate(-18px, -18px);
+  }
+
+  .sticker .tape--bottom::before {
+    transform: translate(18px, 18px);
+  }
+
+  .sticker .tape--clear {
+    border: 0;
+    background: none;
+    backdrop-filter: none;
   }
 }

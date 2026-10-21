@@ -14,7 +14,26 @@ const STICKER_GAP = 2;
 const LEAVE_ANIMATION_MS = 900;
 const RANDOM_ATTEMPTS = 80;
 
-const COLORS = ['#ffd84d', '#ff8fb8', '#8de5cf', '#a9c8ff', '#c8a8ff', '#ffab76'];
+const DEFAULT_COLORS = ['#ffd84d', '#ff8fb8', '#8de5cf', '#a9c8ff', '#c8a8ff', '#ffab76'];
+
+// Палитра Halloween: четыре ряда по четыре оттенка с референса дизайна.
+const HALLOWEEN_COLORS = [
+  '#e85d04',
+  '#f8660b',
+  '#f97316',
+  '#ed7d00',
+  '#2f7d24',
+  '#4c9f3c',
+  '#7a9f16',
+  '#a3e600',
+  '#5b2475',
+  '#821d83',
+  '#9b38a5',
+  '#a000d9',
+  '#735528',
+  '#876b48',
+  '#9d815a',
+];
 
 /** Шансы редких эффектов: проверяются по нарастающей от броска Math.random(). */
 const EFFECT_CHANCES: Array<[StickerEffect, number]> = [
@@ -156,13 +175,15 @@ export class StickerBoard {
     const position = this.findPosition();
     if (!position) return false;
     const id = this.nextId++;
+    const settings = this.settings();
+    const colors = settings.theme === 'halloween' ? HALLOWEEN_COLORS : DEFAULT_COLORS;
     const sticker: Sticker = {
       id,
       syncId: queued.syncId,
       author: queued.author,
       text: queued.text,
       content: queued.content,
-      color: COLORS[id % COLORS.length],
+      color: colors[id % colors.length],
       x: position.x,
       y: position.y,
       rotation: -6 + Math.random() * 12,

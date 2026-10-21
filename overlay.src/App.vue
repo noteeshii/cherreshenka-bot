@@ -7,6 +7,7 @@ import HeroSection from './components/HeroSection.vue';
 import ObsSetup from './components/ObsSetup.vue';
 import OverlaySettings from './components/OverlaySettings.vue';
 import StickerStage from './components/StickerStage.vue';
+import ThemePicker from './components/ThemePicker.vue';
 import { useChatStickersStore } from './stores/chatStickers';
 
 const store = useChatStickersStore();
@@ -23,6 +24,7 @@ const {
   safeBottom,
   safeLeft,
   safeAreaExcluded,
+  theme,
   status,
   syncStatus,
   stickers,
@@ -50,7 +52,7 @@ onBeforeUnmount(dispose);
 </script>
 
 <template>
-  <main :class="['app', { overlay: isOverlay }]">
+  <main :class="['app', { overlay: isOverlay }]" :data-theme="theme">
     <section v-if="!isOverlay" class="shell">
       <AppHeader />
       <HeroSection />
@@ -76,6 +78,7 @@ onBeforeUnmount(dispose);
           @create-profile="createProfile"
           @connect="connect"
         />
+        <ThemePicker v-model="theme" />
         <StickerStage
           :stickers="stickers"
           :channel="channel"

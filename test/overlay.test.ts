@@ -140,19 +140,28 @@ class TestClient {
     });
   }
 
+  public send(message: unknown): void {
+    this.socket.send(JSON.stringify(message));
+  }
+
   public close(): void {
     this.socket.close();
   }
 }
 
-const hello = (profileId: string, rewardMode: boolean) => ({
+const hello = (
+  profileId: string,
+  rewardMode: boolean,
+  theme?: 'default' | 'halloween' | 'new_year',
+  updatedAt = Date.now(),
+) => ({
   type: 'hello',
   role: 'overlay',
   profile: {
     id: profileId,
     name: profileId,
-    updatedAt: Date.now(),
-    settings: { channel: 'fixture', lifetime: 30, rewardMode },
+    updatedAt,
+    settings: { channel: 'fixture', lifetime: 30, rewardMode, ...(theme ? { theme } : {}) },
   },
 });
 

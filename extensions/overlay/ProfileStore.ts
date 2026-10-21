@@ -1,5 +1,5 @@
 import { StickerBoard } from './StickerBoard.ts';
-import type { OverlaySettings, Profile, ProfilePayload } from './types.ts';
+import type { OverlaySettings, OverlayTheme, Profile, ProfilePayload } from './types.ts';
 
 const DEFAULT_SETTINGS: OverlaySettings = {
   channel: '',
@@ -10,10 +10,14 @@ const DEFAULT_SETTINGS: OverlaySettings = {
   safeBottom: 8,
   safeLeft: 8,
   safeAreaExcluded: false,
+  theme: 'default',
 };
 
 const clampSetting = (value: unknown, fallback: number): number =>
   Number.isFinite(value) ? Math.min(100, Math.max(0, Number(value))) : fallback;
+
+const isOverlayTheme = (value: unknown): value is OverlayTheme =>
+  value === 'default' || value === 'halloween' || value === 'new_year';
 
 /** Приводит присланные настройки к валидному виду, дополняя их текущими значениями. */
 export const sanitizeSettings = (
@@ -37,6 +41,7 @@ export const sanitizeSettings = (
     typeof value?.safeAreaExcluded === 'boolean'
       ? value.safeAreaExcluded
       : current.safeAreaExcluded,
+  theme: isOverlayTheme(value?.theme) ? value.theme : current.theme,
 });
 
 export type BoardFactory = (profile: Profile) => StickerBoard;
