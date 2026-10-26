@@ -97,14 +97,6 @@ export type StreamerDeletedMessage = {
   targetMessageId: string;
 };
 
-/** Коды ролей пользователя в событиях Streamer.bot. */
-const STREAMERBOT_ROLE = {
-  broadcaster: 1,
-  moderator: 2,
-  vip: 3,
-  subscriber: 4,
-} as const;
-
 /** Результат подготовки сообщения: общий для всех профилей, чтобы разбирать его один раз. */
 export type PreparedMessage = {
   author: string;
@@ -168,17 +160,16 @@ const deriveRoles = (payload: StreamerChatMessage): UserRole[] => {
     payload.user.login.toLowerCase() === payload.broadcaster.login.toLowerCase() ||
     badges.includes('broadcaster');
   if (isOwner) roles.push('channelOwner');
-  if (badges.includes('moderator') || payload.user.role === STREAMERBOT_ROLE.moderator) {
+  if (badges.includes('moderator')) {
     roles.push('moderator');
   }
-  if (badges.includes('vip') || payload.user.role === STREAMERBOT_ROLE.vip) {
+  if (badges.includes('vip')) {
     roles.push('vip');
   }
   if (
     !isOwner &&
     (badges.includes('subscriber') ||
-      payload.user.subscribed ||
-      payload.user.role === STREAMERBOT_ROLE.subscriber)
+      payload.user.subscribed)
   ) {
     roles.push('subscriber');
   }
