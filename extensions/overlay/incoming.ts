@@ -166,11 +166,7 @@ const deriveRoles = (payload: StreamerChatMessage): UserRole[] => {
   if (badges.includes('vip')) {
     roles.push('vip');
   }
-  if (
-    !isOwner &&
-    (badges.includes('subscriber') ||
-      payload.user.subscribed)
-  ) {
+  if (!isOwner && (badges.includes('subscriber') || payload.user.subscribed)) {
     roles.push('subscriber');
   }
   return roles;
