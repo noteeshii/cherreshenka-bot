@@ -23,6 +23,8 @@ overlay.dist
 *.njsproj
 *.sln
 *.sw?
+tsconfig.tsbuildinfo
+FEATURES
 
 .env
 .env.*
