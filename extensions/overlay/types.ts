@@ -3,6 +3,8 @@ export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'error';
 
 export type StickerEffect = 'none' | 'foil' | 'holographic' | 'polychrome' | 'gold';
 
+export type HalloweenStickerEffect = 'none' | 'spider' | 'ghosts' | 'pumpkin';
+
 export type OverlayTheme = 'default' | 'halloween' | 'new_year';
 
 export type UserRole = 'channelOwner' | 'moderator' | 'vip' | 'subscriber' | 'follower';
@@ -44,6 +46,7 @@ export type Sticker = {
   leaving: boolean;
   pinned: boolean;
   effect: StickerEffect;
+  halloweenEffect: HalloweenStickerEffect;
   roles: UserRole[];
   customRewardId?: string | null;
 };
@@ -56,6 +59,7 @@ export type QueuedSticker = {
   content?: MessageFragment[];
   roles: UserRole[];
   effect: StickerEffect;
+  halloweenEffect: HalloweenStickerEffect;
   pinned: boolean;
   customRewardId: string | null;
   lifetimeMs: number;

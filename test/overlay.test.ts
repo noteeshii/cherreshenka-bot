@@ -317,6 +317,8 @@ test('стикеры синхронизируются между клиента�
   const first = lastStickers(chatFirst, 'chat')!.stickers[0];
   const second = lastStickers(chatSecond, 'chat')!.stickers[0];
   assert.deepEqual(stable(first), stable(second));
+  assert.equal(first.halloweenEffect, second.halloweenEffect);
+  assert.ok(['none', 'spider', 'ghosts', 'pumpkin'].includes(first.halloweenEffect));
   assert.equal(first.syncId, 'chat:message-one');
   assert.deepEqual(first.content, [
     { type: 'text', text: '😀 ' },
@@ -338,7 +340,9 @@ test('стикеры синхронизируются между клиента�
     hello('chat', false),
   );
   await waitUntil(() => lastStickers(reconnected, 'chat')?.stickers.length === 1);
-  assert.deepEqual(stable(lastStickers(reconnected, 'chat')!.stickers[0]), stable(second));
+  const restored = lastStickers(reconnected, 'chat')!.stickers[0];
+  assert.deepEqual(stable(restored), stable(second));
+  assert.equal(restored.halloweenEffect, second.halloweenEffect);
 
   // Удаление сообщения в чате убирает стикер после анимации ухода.
   overlay.onDeleteMessage({ targetMessageId: 'message-one' });

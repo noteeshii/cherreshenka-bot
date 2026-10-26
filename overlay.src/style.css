@@ -769,6 +769,15 @@ label output {
   pointer-events: none;
 }
 
+.halloween-decoration {
+  display: none;
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
 .sticker--foil {
   outline: 2px solid #e8fbff;
   box-shadow:
@@ -1764,5 +1773,289 @@ footer {
     border: 0;
     background: none;
     backdrop-filter: none;
+  }
+
+  .halloween-decoration {
+    display: block;
+  }
+
+  .halloween-spider {
+    --spider-size: 48px;
+    position: absolute;
+    top: 8px;
+    left: -16px;
+    width: var(--spider-size);
+    overflow: visible;
+    filter: drop-shadow(1px 2px 1px #00000073);
+    animation: halloween-spider-crawl 9s linear infinite;
+  }
+
+  .spider-leg {
+    fill: none;
+    stroke: #161219;
+    stroke-width: 4;
+    stroke-linecap: round;
+    transform-box: view-box;
+    animation: halloween-spider-step 0.34s ease-in-out infinite alternate;
+  }
+
+  .spider-leg--1 {
+    transform-origin: 27px 27px;
+  }
+
+  .spider-leg--2 {
+    transform-origin: 25px 31px;
+    animation-delay: -0.17s;
+  }
+
+  .spider-leg--3 {
+    transform-origin: 25px 36px;
+  }
+
+  .spider-leg--4 {
+    transform-origin: 28px 39px;
+    animation-delay: -0.17s;
+  }
+
+  .spider-leg--5 {
+    transform-origin: 37px 27px;
+    animation-delay: -0.17s;
+  }
+
+  .spider-leg--6 {
+    transform-origin: 39px 31px;
+  }
+
+  .spider-leg--7 {
+    transform-origin: 39px 36px;
+    animation-delay: -0.17s;
+  }
+
+  .spider-leg--8 {
+    transform-origin: 36px 39px;
+  }
+
+  .spider-body,
+  .spider-head {
+    fill: #171219;
+    stroke: #35283b;
+    stroke-width: 1.5;
+  }
+
+  .spider-eye {
+    fill: #f97316;
+    filter: drop-shadow(0 0 2px #ff8a00);
+  }
+
+  .halloween-ghost {
+    position: absolute;
+    bottom: -60px;
+    width: 58px;
+    overflow: visible;
+    opacity: 0;
+    filter: drop-shadow(0 0 7px #b46dff99);
+    animation: halloween-ghost-rise 5.8s ease-in-out infinite;
+  }
+
+  .halloween-ghost--left {
+    left: -34px;
+    animation-delay: -0.8s;
+  }
+
+  .halloween-ghost--right {
+    right: -34px;
+    animation-delay: -3.5s;
+  }
+
+  .ghost-silhouette {
+    fill: #f8f3ff;
+    stroke: #cab2e9;
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: halloween-ghost-waver 0.85s ease-in-out infinite alternate;
+  }
+
+  .halloween-ghost--right .ghost-silhouette {
+    animation-delay: -0.42s;
+  }
+
+  .ghost-eye,
+  .ghost-mouth {
+    fill: #36213f;
+    stroke: none;
+  }
+
+  .halloween-pumpkin {
+    position: absolute;
+    bottom: -27px;
+    left: -29px;
+    width: 86px;
+    overflow: visible;
+    filter: drop-shadow(2px 4px 2px #180a0280);
+    animation: halloween-pumpkin-hover 3.2s ease-in-out infinite;
+  }
+
+  .pumpkin-stem {
+    fill: #47752b;
+    stroke: #233d16;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+  }
+
+  .pumpkin-body {
+    fill: #e85d04;
+    stroke: #6f2706;
+    stroke-width: 3;
+    stroke-linejoin: round;
+  }
+
+  .pumpkin-groove {
+    fill: none;
+    stroke: #9b3507;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    opacity: 0.72;
+  }
+
+  .pumpkin-light {
+    fill: #ffe77a;
+    stroke: #7c3100;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: halloween-pumpkin-pulse 1.8s ease-in-out infinite;
+  }
+
+  .mini .halloween-spider {
+    --spider-size: 38px;
+  }
+
+  .mini .halloween-ghost {
+    width: 46px;
+  }
+
+  .mini .halloween-pumpkin {
+    bottom: -22px;
+    left: -23px;
+    width: 68px;
+  }
+}
+
+@keyframes halloween-spider-crawl {
+  0% {
+    top: 8px;
+    left: -16px;
+    transform: rotate(-18deg);
+  }
+
+  22% {
+    top: 8px;
+    left: calc(100% - var(--spider-size) + 16px);
+    transform: rotate(16deg);
+  }
+
+  27% {
+    top: calc(100% - var(--spider-size) + 14px);
+    left: calc(100% - var(--spider-size) + 16px);
+    transform: rotate(104deg);
+  }
+
+  48% {
+    top: calc(100% - var(--spider-size) + 14px);
+    left: 38%;
+    transform: rotate(184deg);
+  }
+
+  70% {
+    top: calc(100% - var(--spider-size) + 14px);
+    left: -16px;
+    transform: rotate(202deg);
+  }
+
+  77% {
+    top: 8px;
+    left: -16px;
+    transform: rotate(278deg);
+  }
+
+  100% {
+    top: 8px;
+    left: -16px;
+    transform: rotate(342deg);
+  }
+}
+
+@keyframes halloween-spider-step {
+  from {
+    transform: rotate(-10deg) scaleY(0.94);
+  }
+
+  to {
+    transform: rotate(10deg) scaleY(1.06);
+  }
+}
+
+@keyframes halloween-ghost-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0) rotate(-7deg) scale(0.72);
+  }
+
+  14% {
+    opacity: 0.88;
+  }
+
+  45% {
+    transform: translate3d(12px, -95px, 0) rotate(7deg) scale(0.92);
+  }
+
+  76% {
+    opacity: 0.82;
+    transform: translate3d(-8px, -185px, 0) rotate(-5deg) scale(1.04);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(9px, -265px, 0) rotate(8deg) scale(1.14);
+  }
+}
+
+@keyframes halloween-ghost-waver {
+  from {
+    transform: skewX(-5deg) scaleX(0.92) scaleY(1.04);
+  }
+
+  to {
+    transform: skewX(6deg) scaleX(1.06) scaleY(0.96);
+  }
+}
+
+@keyframes halloween-pumpkin-hover {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+
+  50% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+}
+
+@keyframes halloween-pumpkin-pulse {
+  0%,
+  100% {
+    fill: #ffad24;
+    filter: drop-shadow(0 0 2px #ff7a00);
+    opacity: 0.7;
+    transform: scale(0.96);
+  }
+
+  48% {
+    fill: #fff3a6;
+    filter: drop-shadow(0 0 5px #ffd000) drop-shadow(0 0 10px #ff6a00);
+    opacity: 1;
+    transform: scale(1.03);
   }
 }

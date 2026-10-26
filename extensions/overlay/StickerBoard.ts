@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type {
+  HalloweenStickerEffect,
   OverlaySettings,
   QueuedSticker,
   Sticker,
@@ -53,6 +54,17 @@ const rollEffect = (): StickerEffect => {
   return 'none';
 };
 
+const HALLOWEEN_EFFECTS: readonly HalloweenStickerEffect[] = [
+  'none',
+  'spider',
+  'ghosts',
+  'pumpkin',
+];
+
+/** Равновероятно выбирает один из вариантов Halloween-декора. */
+export const rollHalloweenEffect = (random: () => number = Math.random): HalloweenStickerEffect =>
+  HALLOWEEN_EFFECTS[Math.floor(random() * HALLOWEEN_EFFECTS.length)] ?? 'none';
+
 type BoardOptions = {
   profileId: string;
   settings: () => OverlaySettings;
@@ -94,6 +106,7 @@ export class StickerBoard {
       content: input.content,
       roles: input.roles ?? [],
       effect: rollEffect(),
+      halloweenEffect: rollHalloweenEffect(),
       pinned: input.pinned === true,
       customRewardId: input.customRewardId || null,
       lifetimeMs: input.lifetimeMs ?? this.settings().lifetime * 1000,
@@ -190,6 +203,7 @@ export class StickerBoard {
       leaving: false,
       pinned: queued.pinned,
       effect: queued.effect,
+      halloweenEffect: queued.halloweenEffect,
       roles: queued.roles,
       customRewardId: queued.customRewardId,
     };

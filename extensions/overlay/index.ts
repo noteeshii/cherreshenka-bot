@@ -4,6 +4,7 @@ export type { RewardRedemption, StreamerChatMessage, StreamerDeletedMessage } fr
 export type { ClientMessage, ServerMessage } from './types.ts';
 export type {
   ConnectionStatus,
+  HalloweenStickerEffect,
   MessageFragment,
   OverlaySettings,
   OverlayTheme,

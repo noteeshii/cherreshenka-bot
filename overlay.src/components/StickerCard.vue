@@ -2,6 +2,7 @@
 import { computed, ref, type CSSProperties } from 'vue';
 import UserBadges from './UserBadges.vue';
 import MessageContent from './MessageContent.vue';
+import HalloweenStickerEffect from './HalloweenStickerEffect.vue';
 import type { Sticker } from '../types';
 
 const props = defineProps<{
@@ -26,6 +27,7 @@ const position = computed(
 );
 
 const effectClass = computed(() => `sticker--${props.sticker.effect}`);
+const halloweenEffect = computed(() => props.sticker.halloweenEffect ?? 'none');
 const effectNames: Record<Sticker['effect'], string> = {
   none: '',
   foil: 'ФОЛЬГА',
@@ -138,6 +140,7 @@ function startDragging(event: PointerEvent) {
     @pointerdown="startDragging"
   >
     <span class="sticker-effect" />
+    <HalloweenStickerEffect v-if="halloweenEffect !== 'none'" :effect="halloweenEffect" />
     <span :class="['tape', 'tape--clear', { 'tape--pinned-top': sticker.pinned }]" />
     <span v-if="sticker.pinned" class="tape tape--clear tape--bottom" />
     <UserBadges :roles="sticker.roles" />
