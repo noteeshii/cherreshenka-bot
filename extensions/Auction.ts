@@ -1,4 +1,5 @@
 import Config from './config.ts';
+import type Logger from './logger.ts';
 
 type Lot = {
   message: string;
@@ -8,9 +9,11 @@ type Lot = {
 
 export default class Auction {
   private readonly config: Config['auction'];
+  private readonly logger: Logger;
 
-  constructor(config: Config) {
+  constructor(config: Config, logger: Logger) {
     this.config = config.auction;
+    this.logger = logger;
   }
 
   private request = async (method: string, endponit: string, body?: Object) => {
@@ -24,6 +27,8 @@ export default class Auction {
     });
 
     if (!response.ok) {
+      this.logger.debug(await response.text());
+
       throw new Error(`Auction return error status: ${response.status}`);
     }
 

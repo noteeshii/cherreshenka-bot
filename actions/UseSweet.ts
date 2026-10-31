@@ -13,15 +13,14 @@ export default class UseSweet implements Action {
     const userStorage = storage.getUserTemporary<TemporaryUserStorage>(user.name);
 
     if (userStorage.countSweet) {
-      userStorage.countSweet = userStorage.countSweet - 1;
-
       await auction.addLot({ message, cost: 500, username: user.name });
-      await twitch.sendMessage(`✅ @${user.name} твой фильм был предложен в аукцион!`);
 
+      userStorage.countSweet = userStorage.countSweet - 1;
       storage.setUserTemporary(user.name, userStorage);
+
+      await twitch.sendMessage(`✅ @${user.name} твой фильм был предложен в аукцион!`);
     } else {
       await twitch.sendMessage(`❌️ @${user.name} ты неправильно используешь команду. Сначала выбей сладость из команды !trickortreat`);
     }
-
   }
 }
