@@ -63,7 +63,7 @@ const overlay = new Overlay(
 
 await overlay.open();
 
-const auction = new Auction(config);
+const auction = new Auction(config, logger.withContext('Auction'));
 const music = new Music(config, logger.withContext('Music'));
 const twitch = new Twitch(config, client);
 const bot = new Bot(twitch, config, music, logger.withContext('Bot'), storage, overlay, auction);
