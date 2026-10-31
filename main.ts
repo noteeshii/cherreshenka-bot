@@ -8,6 +8,7 @@ import {
   Storage,
   DonationAlerts,
   Overlay,
+  Auction,
   type StreamerChatMessage,
   type RewardRedemption,
 } from '#extensions';
@@ -62,9 +63,10 @@ const overlay = new Overlay(
 
 await overlay.open();
 
+const auction = new Auction(config);
 const music = new Music(config, logger.withContext('Music'));
 const twitch = new Twitch(config, client);
-const bot = new Bot(twitch, config, music, logger.withContext('Bot'), storage, overlay);
+const bot = new Bot(twitch, config, music, logger.withContext('Bot'), storage, overlay, auction);
 const donationAlerts = new DonationAlerts(config.donates);
 
 client.on('Twitch.ChatMessage', ({ data }) => {

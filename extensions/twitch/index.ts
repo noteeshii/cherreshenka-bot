@@ -93,12 +93,13 @@ export default class Twitch {
     );
   }
 
-  public async timeoutUser(userName: string) {
+  public async timeoutUser(userName: string, duration = 1) {
     await this.ensureSuccess(
       this.client.doAction(
         { name: 'TimeoutUser' },
         {
           userName,
+          duration,
         },
       ),
     );

@@ -40,6 +40,10 @@ export namespace Config {
     donates: {
       accessToken: string;
     };
+    auction: {
+      accessToken: string;
+      basePath: string;
+    };
     rewards: {
       musicId: string;
       pinnedStickerId: string;
@@ -98,6 +102,11 @@ class Config {
         accessToken: String(env.DONATION_ALERTS_ACCESS_TOKEN ?? ''),
       },
 
+      auction: {
+        accessToken: String(env.AUCTION_ACCESS_TOKEN ?? ''),
+        basePath: String(env.AUCTION_BASE_PATH ?? ''),
+      },
+
       rewards: {
         musicId: env.REWARDS_MUSIC_ID ?? '',
         pinnedStickerId: env.REWARDS_PINNED_STICKER_ID ?? '',
@@ -134,6 +143,9 @@ class Config {
   }
   get donates() {
     return this.props.donates;
+  }
+  get auction() {
+    return this.props.auction;
   }
   get rewards() {
     return this.props.rewards;

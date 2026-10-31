@@ -1,6 +1,6 @@
 import type { StreamerbotEventData } from '@streamerbot/client';
 
-import { Twitch, Music, Logger, Storage, Overlay } from '#extensions';
+import { Twitch, Music, Logger, Storage, Overlay, Auction } from '#extensions';
 
 export interface Context {
   twitch: Twitch;
@@ -8,6 +8,7 @@ export interface Context {
   logger: Logger;
   storage: Storage;
   overlay: Overlay;
+  auction: Auction;
 }
 
 export interface Action {
@@ -39,4 +40,5 @@ export type PermanentUserStorage = {
 export type TemporaryUserStorage = {
   countBasicStickerRedeemed?: number;
   countPinnedStickerRedeemed?: number;
+  countSweet?: number;
 };

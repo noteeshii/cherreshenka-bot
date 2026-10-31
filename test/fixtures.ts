@@ -17,6 +17,7 @@ export function testConfig(
       clientId: 'client-id',
     },
     donates: { accessToken: 'donation-alerts-access-token' },
+    auction: { accessToken: 'auction-access-token', basePath: 'https://pointauc.com/api/oshino' },
     rewards: { musicId: 'reward', pinnedStickerId: '', basicStickerId: '' },
     music: { mpvPath: 'mpv', ytDlpPath: 'yt-dlp', yandexMusicToken: '' },
     actions: { hitChance: 6 },

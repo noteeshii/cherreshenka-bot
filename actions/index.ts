@@ -16,4 +16,6 @@ export { default as SendDonateMessage } from './SendDonateMessage.ts';
 export { default as RedeemBasicSticker } from './RedeemBasicSticker.ts';
 export { default as RedeemPinnedSticker } from './RedeemPinnedSticker.ts';
 export { default as SendStickerToOverlay } from './SendStickerToOverlay.ts';
+export { default as TrickOrTreat } from './TrickOrTreat.ts';
+export { default as UseSweet } from './UseSweet.ts';
 export type { Action, RewardEvent, CommandEvent } from './types.ts';

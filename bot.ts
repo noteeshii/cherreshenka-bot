@@ -9,6 +9,7 @@ import type {
   StreamerChatMessage,
   StreamerDeletedMessage,
   RewardRedemption,
+  Auction,
 } from '#extensions';
 import {
   type Action,
@@ -31,6 +32,8 @@ import {
   RedeemBasicSticker,
   RedeemPinnedSticker,
   SendStickerToOverlay,
+  TrickOrTreat,
+  UseSweet,
 } from '#actions';
 
 // Streamer.bot may pass Unicode format characters (for example U+034F) after
@@ -50,6 +53,7 @@ export class Bot {
   private readonly logger: Logger;
   private readonly storage: Storage;
   private readonly overlay: Overlay;
+  private readonly auction: Auction;
 
   constructor(
     twitch: Twitch,
@@ -58,6 +62,7 @@ export class Bot {
     logger: Logger,
     storage: Storage,
     overlay: Overlay,
+    auction: Auction,
   ) {
     this.twitch = twitch;
     this.music = music;
@@ -65,6 +70,7 @@ export class Bot {
     this.logger = logger;
     this.storage = storage;
     this.overlay = overlay;
+    this.auction = auction;
 
     this.actions = [
       new PauseCurrentTrack(),
@@ -85,6 +91,8 @@ export class Bot {
       new RedeemBasicSticker(this.config),
       new RedeemPinnedSticker(this.config),
       new SendStickerToOverlay(),
+      new TrickOrTreat(),
+      new UseSweet(),
     ];
   }
 
@@ -107,6 +115,7 @@ export class Bot {
       logger: messageLogger,
       storage: this.storage,
       overlay: this.overlay,
+      auction: this.auction,
     });
 
     messageLogger.debug(`Completed: SendStickerToOverlay`);
@@ -137,6 +146,7 @@ export class Bot {
         logger: commandLogger,
         storage: this.storage,
         overlay: this.overlay,
+        auction: this.auction,
       },
     );
 
@@ -168,6 +178,7 @@ export class Bot {
       logger: rewardLogger,
       storage: this.storage,
       overlay: this.overlay,
+      auction: this.auction,
     });
 
     rewardLogger.debug(`Completed: ${reward.reward.title}`);
@@ -192,6 +203,7 @@ export class Bot {
       logger: donateLogger,
       storage: this.storage,
       overlay: this.overlay,
+      auction: this.auction,
     });
 
     donateLogger.debug(`Completed: SendDonateMessage`);

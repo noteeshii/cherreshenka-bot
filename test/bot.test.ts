@@ -48,6 +48,7 @@ function setup(queuedTracks: { title: string | undefined }[] = [], enqueueError?
     new Logger({ level: '' }),
     new Storage(),
     { onMessage: () => undefined, onDeleteMessage: () => undefined } as unknown as Overlay,
+    { addLot: async () => {} } as any,
   );
   return { bot, calls };
 }
@@ -108,7 +109,7 @@ test('транспорт передаёт реальные запросы API и
   assert.deepEqual(calls, [
     ['twitch', 'hi', { bot: true, internal: false }],
     [{ name: 'SendAnnounce' }, { message: 'news' }],
-    [{ name: 'TimeoutUser' }, { userName: '@Viewer' }],
+    [{ name: 'TimeoutUser' }, { userName: '@Viewer', duration: 1 }],
   ]);
   client.sendMessage = async () => ({ status: 'error' }) as never;
   await assert.rejects(twitch.sendMessage('hi'));
