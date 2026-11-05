@@ -786,34 +786,48 @@ label output {
     0 0 22px #98eaffb3;
 }
 
-.sticker--foil .sticker-effect {
-  background:
-    repeating-linear-gradient(
-      115deg,
-      transparent 0 14px,
-      #ffffff24 15px 17px,
-      transparent 18px 30px
-    ),
-    linear-gradient(
-      105deg,
-      transparent 20%,
-      #ffffff20 36%,
-      #ffffffd9 48%,
-      #bdefff80 55%,
-      transparent 72%
-    );
-  background-size:
-    auto,
-    240% 100%;
+.sticker--foil .sticker-effect,
+.sticker--gold .sticker-effect {
   opacity: 0.9;
+}
+
+.sticker-texture {
+  position: absolute;
+  inset: -48px;
+  pointer-events: none;
+  animation: metallic-texture-flow 3.4s linear infinite;
+}
+
+.sticker--foil .sticker-texture {
+  /* One stripe period projected onto the horizontal axis: 30px / sin(115deg). */
+  --texture-travel: 33.10134px;
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0 14px,
+    #ffffff24 15px 17px,
+    transparent 18px 30px
+  );
+}
+
+.sticker--foil .sticker-effect::before {
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    #ffffff20 36%,
+    #ffffffd9 48%,
+    #bdefff80 55%,
+    transparent 72%
+  );
   animation: foil-shimmer 3.4s linear infinite;
 }
 
 .sticker--foil .sticker-effect::after {
-  inset: 0;
+  inset: -19px;
   background-image: radial-gradient(#fff 0 1px, transparent 1.5px);
   background-size: 17px 19px;
   opacity: 0.45;
+  animation: foil-dots-flow 3.4s linear infinite;
 }
 
 .sticker--holographic {
@@ -825,6 +839,11 @@ label output {
 }
 
 .sticker--holographic .sticker-effect {
+  opacity: 0.72;
+}
+
+.sticker--holographic .sticker-effect::before {
+  inset: -60%;
   background:
     linear-gradient(
       125deg,
@@ -836,10 +855,6 @@ label output {
       #ff1f65b8
     ),
     repeating-linear-gradient(-35deg, transparent 0 9px, #ffffff4d 10px, transparent 12px 22px);
-  background-size:
-    220% 220%,
-    auto;
-  opacity: 0.72;
   animation: holographic-flow 4s ease-in-out infinite alternate;
 }
 
@@ -861,16 +876,17 @@ label output {
 }
 
 .sticker--polychrome .sticker-effect {
+  opacity: 0.78;
+}
+
+.sticker--polychrome .sticker-effect::before {
+  inset: -35%;
   background:
     radial-gradient(circle at 20% 25%, #ff168acc, transparent 42%),
     radial-gradient(circle at 78% 30%, #18dfffcc, transparent 44%),
     radial-gradient(circle at 50% 85%, #b9ff20cc, transparent 48%),
     linear-gradient(120deg, #7626ff99, #ff8a0099, #00dc9099);
-  background-size: 170% 170%;
-  opacity: 0.78;
-  animation:
-    polychrome-flow 3.8s ease-in-out infinite alternate,
-    polychrome-hue 7s linear infinite;
+  animation: polychrome-flow 3.8s ease-in-out infinite alternate;
 }
 
 .sticker--polychrome .sticker-effect::after {
@@ -903,21 +919,28 @@ label output {
     0 0 30px #ffb70099;
 }
 
-.sticker--gold .sticker-effect {
-  background:
-    repeating-linear-gradient(115deg, transparent 0 18px, #fff7c44d 20px, transparent 23px 38px),
-    linear-gradient(
-      110deg,
-      transparent 15%,
-      #fffbe9e6 43%,
-      #ffffff 49%,
-      #fff2a099 55%,
-      transparent 75%
-    );
-  background-size:
-    auto,
-    260% 100%;
-  opacity: 0.9;
+.sticker--gold .sticker-texture {
+  /* Match the 38px stripe period without a jump when the animation loops. */
+  --texture-travel: 41.92836px;
+  animation-duration: 2.8s;
+  background: repeating-linear-gradient(
+    115deg,
+    transparent 0 18px,
+    #fff7c44d 20px,
+    transparent 23px 38px
+  );
+}
+
+.sticker--gold .sticker-effect::before {
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 15%,
+    #fffbe9e6 43%,
+    #ffffff 49%,
+    #fff2a099 55%,
+    transparent 75%
+  );
   animation: gold-shine 2.8s ease-in-out infinite;
 }
 
@@ -1357,31 +1380,41 @@ label output {
   }
 }
 
+@keyframes metallic-texture-flow {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--texture-travel));
+  }
+}
+
+@keyframes foil-dots-flow {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(17px, 19px);
+  }
+}
+
 @keyframes foil-shimmer {
   from {
-    background-position:
-      0 0,
-      180% 0;
+    transform: translateX(-100%);
   }
 
   to {
-    background-position:
-      30px 0,
-      -80% 0;
+    transform: translateX(100%);
   }
 }
 
 @keyframes holographic-flow {
   from {
-    background-position:
-      0% 20%,
-      0 0;
+    transform: translate(-20%, -12%);
   }
 
   to {
-    background-position:
-      100% 80%,
-      36px 20px;
+    transform: translate(20%, 12%);
   }
 }
 
@@ -1404,17 +1437,11 @@ label output {
 
 @keyframes polychrome-flow {
   from {
-    background-position: 0% 0%;
+    transform: translate(-15%, -15%);
   }
 
   to {
-    background-position: 100% 100%;
-  }
-}
-
-@keyframes polychrome-hue {
-  to {
-    filter: hue-rotate(360deg);
+    transform: translate(15%, 15%);
   }
 }
 
@@ -1427,16 +1454,12 @@ label output {
 @keyframes gold-shine {
   0%,
   15% {
-    background-position:
-      0 0,
-      180% 0;
+    transform: translateX(-100%);
   }
 
   75%,
   100% {
-    background-position:
-      30px 0,
-      -80% 0;
+    transform: translateX(100%);
   }
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, type CSSProperties } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, type CSSProperties } from 'vue';
 import StickerCard from './StickerCard.vue';
 import type { Sticker } from '../types';
 
@@ -34,6 +34,24 @@ const safeRight = defineModel<number>('safeRight', { required: true });
 const safeBottom = defineModel<number>('safeBottom', { required: true });
 const safeLeft = defineModel<number>('safeLeft', { required: true });
 const stageElement = ref<HTMLElement | null>(null);
+const overlayScale = ref(window.innerWidth / 1920);
+const overlayStyle = computed<CSSProperties>(() => ({
+  zoom: overlayScale.value,
+  width: `${100 / overlayScale.value}vw`,
+  height: `${100 / overlayScale.value}vh`,
+}));
+
+function updateOverlayScale() {
+  overlayScale.value = window.innerWidth / 1920;
+}
+
+onMounted(() => {
+  if (!props.preview) {
+    updateOverlayScale();
+    window.addEventListener('resize', updateOverlayScale);
+  }
+});
+onBeforeUnmount(() => window.removeEventListener('resize', updateOverlayScale));
 const resizeDirections: DragDirection[] = [
   'top',
   'right',
@@ -125,7 +143,7 @@ function startResize(event: PointerEvent, direction: DragDirection) {
   <div v-if="preview" class="preview-card">
     <div class="preview-top">
       <span>
-        ПРЕДПРОСМОТР / 1920×1080
+        ПРЕДПРОСМОТР / 16:9
         <b v-if="queueSize > 0">В ОЧЕРЕДИ: {{ queueSize }}</b>
       </span>
       <button @click="$emit('demo')">+ Тестовый стикер</button>
@@ -173,7 +191,7 @@ function startResize(event: PointerEvent, direction: DragDirection) {
     </div>
   </div>
 
-  <section v-else ref="stageElement" class="stage full">
+  <section v-else ref="stageElement" class="stage full" :style="overlayStyle">
     <div v-if="safeAreaExcluded" class="excluded-stickers-layer overlay-stickers-layer">
       <StickerCard
         v-for="sticker in stickers"

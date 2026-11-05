@@ -104,11 +104,13 @@ function startDragging(event: PointerEvent) {
       return;
     }
 
-    const containerBounds = containerElement.getBoundingClientRect();
     const maximumX =
-      ((containerBounds.width - stickerElement.offsetWidth) / containerBounds.width) * 100;
+      ((containerElement.clientWidth - stickerElement.offsetWidth) / containerElement.clientWidth) *
+      100;
     const maximumY =
-      ((containerBounds.height - stickerElement.offsetHeight) / containerBounds.height) * 100;
+      ((containerElement.clientHeight - stickerElement.offsetHeight) /
+        containerElement.clientHeight) *
+      100;
 
     emit(
       'move',
@@ -139,7 +141,9 @@ function startDragging(event: PointerEvent) {
     :style="position"
     @pointerdown="startDragging"
   >
-    <span class="sticker-effect" />
+    <span class="sticker-effect">
+      <span v-if="sticker.effect === 'foil' || sticker.effect === 'gold'" class="sticker-texture" />
+    </span>
     <HalloweenStickerEffect v-if="halloweenEffect !== 'none'" :effect="halloweenEffect" />
     <span :class="['tape', 'tape--clear', { 'tape--pinned-top': sticker.pinned }]" />
     <span v-if="sticker.pinned" class="tape tape--clear tape--bottom" />

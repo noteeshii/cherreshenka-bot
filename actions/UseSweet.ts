@@ -20,7 +20,9 @@ export default class UseSweet implements Action {
 
       await twitch.sendMessage(`✅ @${user.name} твой фильм был предложен в аукцион!`);
     } else {
-      await twitch.sendMessage(`❌️ @${user.name} ты неправильно используешь команду. Сначала выбей сладость из команды !trickortreat`);
+      await twitch.sendMessage(
+        `❌️ @${user.name} ты неправильно используешь команду. Сначала выбей сладость из команды !trickortreat`,
+      );
     }
   }
 }
